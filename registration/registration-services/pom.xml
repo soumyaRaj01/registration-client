@@ -6,12 +6,12 @@
 	<parent>
 		<groupId>io.mosip.registration</groupId>
 		<artifactId>registration-client-parent</artifactId>
-		<version>1.2.0.2</version>
+		<version>1.2.0.2-SNAPSHOT</version>
 	</parent>
 	<artifactId>registration-services</artifactId>
 	<name>registration-services</name>
 	<description>Maven project of MOSIP Registration Service</description>
-	<version>1.2.0.2</version>
+	<version>1.2.0.2-SNAPSHOT</version>
 
 	<dependencies>
 		<!-- Lombok -->
@@ -462,7 +462,7 @@
 		<dependency>
 			<groupId>io.mosip.registration</groupId>
 			<artifactId>registration-api</artifactId>
-			<version>${mosip.core.kernel.version}</version>
+			<version>1.2.0.2</version>
 			<exclusions>
 				<exclusion>
 					<groupId>io.mosip.kernel</groupId>
@@ -474,7 +474,7 @@
 		<dependency>
 			<groupId>io.mosip.registration</groupId>
 			<artifactId>registration-api-stub-impl</artifactId>
-			<version>${mosip.core.kernel.version}</version>
+			<version>1.2.0.2-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -511,6 +511,21 @@
 			<groupId>com.squareup.okhttp3</groupId>
 			<artifactId>mockwebserver</artifactId>
 			<version>3.14.4</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.mosip.mock.sdk</groupId>
+			<artifactId>mock-sdk</artifactId>
+			<version>1.2.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/io.mosip.kernel/kernel-auth-adapter -->
+
+		<!-- https://mvnrepository.com/artifact/io.mosip.kernel/kernel-keymanager-service -->
+		<dependency>
+			<groupId>io.mosip.kernel</groupId>
+			<artifactId>kernel-keymanager-service</artifactId>
+			<version>1.2.0.1-B2</version>
+			<classifier>lib</classifier>
 		</dependency>
 	</dependencies>
 	<!--<repositories> <repository> <id>local-maven-repo</id> <url>file:///${basedir}/lib</url>

@@ -448,15 +448,15 @@ public class GenericBiometricsController extends BaseController {
 
 						String modality = isFace(currentModality) || isExceptionPhoto(currentModality) ?
 								 RegistrationConstants.FACE_FULLFACE : currentModality.name();
-						 MdmBioDevice bioDevice =deviceSpecificationFactory.getDeviceInfoByModality(modality);
+							MdmBioDevice bioDevice =deviceSpecificationFactory.getDeviceInfoByModality(modality);
 
-						    if (deviceSpecificationFactory.isDeviceAvailable(bioDevice)) {
-	                            return bioDevice;
-	                        } else {
-	                            throw new RegBaseCheckedException(
-	                                    RegistrationExceptionConstants.MDS_BIODEVICE_NOT_FOUND.getErrorCode(),
-	                                    RegistrationExceptionConstants.MDS_BIODEVICE_NOT_FOUND.getErrorMessage());
-	                        }
+							if (deviceSpecificationFactory.isDeviceAvailable(bioDevice)) {
+								return bioDevice;
+							} else {
+								throw new RegBaseCheckedException(
+										RegistrationExceptionConstants.MDS_BIODEVICE_NOT_FOUND.getErrorCode(),
+										RegistrationExceptionConstants.MDS_BIODEVICE_NOT_FOUND.getErrorMessage());
+							}
 					}
 				};
 			}
@@ -477,19 +477,18 @@ public class GenericBiometricsController extends BaseController {
 						return;
 					}
 
-					InputStream urlStream = bioService.getStream(mdmBioDevice,
-							isFace(currentModality) ? RegistrationConstants.FACE_FULLFACE : currentModality.name());
-
-					boolean isStreamStarted = urlStream != null && urlStream.read() != -1;
-					if (!isStreamStarted) {
-						LOGGER.info("URL Stream was null at : {} ", System.currentTimeMillis());
-						deviceSpecificationFactory.initializeDeviceMap(true);
-						streamer.setUrlStream(null);
-						generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.STREAMING_ERROR));
-						return;
-					}
-					rCaptureTaskService();
-					streamer.startStream(urlStream, biometricImage, biometricImage);
+						InputStream urlStream = bioService.getStream(mdmBioDevice,
+								isFace(currentModality) ? RegistrationConstants.FACE_FULLFACE : currentModality.name());
+						boolean isStreamStarted = urlStream != null && urlStream.read() != -1;
+						if (!isStreamStarted) {
+							LOGGER.info("URL Stream was null at : {} ", System.currentTimeMillis());
+							deviceSpecificationFactory.initializeDeviceMap(true);
+							streamer.setUrlStream(null);
+							generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.STREAMING_ERROR));
+							return;
+						}
+						rCaptureTaskService();
+						streamer.startStream(urlStream, biometricImage, biometricImage);
 
 				} catch (RegBaseCheckedException | IOException exception) {
 					LOGGER.error("Error while streaming : " + currentModality,  exception);

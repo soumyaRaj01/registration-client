@@ -5,18 +5,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import io.mosip.registration.api.docscanner.DeviceType;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import io.mosip.registration.api.docscanner.dto.DocScanDevice;
 
 import eu.gnome.morena.Camera;
 import eu.gnome.morena.Configuration;
 import eu.gnome.morena.Device;
 import eu.gnome.morena.Manager;
 import eu.gnome.morena.Scanner;
-import io.mosip.registration.api.docscanner.DeviceType;
 import io.mosip.registration.api.docscanner.DocScannerService;
-import io.mosip.registration.api.docscanner.dto.DocScanDevice;
 
 @Component
 public class MorenaDocScanServiceImpl implements DocScannerService {
@@ -70,7 +71,7 @@ public class MorenaDocScanServiceImpl implements DocScannerService {
 
         List<DocScanDevice> devices = new ArrayList<>();
         connectedDevices.forEach(device -> {
-            DocScanDevice docScanDevice = new DocScanDevice();
+        	DocScanDevice docScanDevice = new DocScanDevice();
             docScanDevice.setId(SERVICE_NAME+":"+device.toString());
             docScanDevice.setName(device.toString());
             docScanDevice.setServiceName(getServiceName());

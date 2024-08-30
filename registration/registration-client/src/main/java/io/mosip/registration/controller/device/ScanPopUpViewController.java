@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.Buffer;
 import java.util.ResourceBundle;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -352,6 +353,7 @@ public class ScanPopUpViewController extends BaseController implements Initializ
 		// Enable Auto-Logout
 		SessionContext.setAutoLogout(true);
 		try {
+		
 
 			if(rectangleSelection != null) {
 				String docNumber = docCurrentPageNumber.getText();

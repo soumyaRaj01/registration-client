@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import javax.imageio.ImageIO;
 
+import io.mosip.registration.dto.*;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -49,9 +50,6 @@ import io.mosip.registration.dao.MachineMappingDAO;
 import io.mosip.registration.dao.RegistrationCenterDAO;
 import io.mosip.registration.dao.UserDetailDAO;
 import io.mosip.registration.dao.UserOnboardDAO;
-import io.mosip.registration.dto.RegistrationDataDto;
-import io.mosip.registration.dto.ResponseDTO;
-import io.mosip.registration.dto.SuccessResponseDTO;
 import io.mosip.registration.entity.MachineMaster;
 import io.mosip.registration.entity.Registration;
 import io.mosip.registration.entity.RegistrationCenter;

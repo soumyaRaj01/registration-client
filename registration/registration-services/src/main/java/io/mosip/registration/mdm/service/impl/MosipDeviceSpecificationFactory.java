@@ -331,7 +331,7 @@ public class MosipDeviceSpecificationFactory {
 			if (key != null && selectedDeviceInfoMap.containsKey(key))
 				return selectedDeviceInfoMap.get(key);
 
-			initializeDeviceMap(true);
+				initializeDeviceMap(true);
 
 			if (key != null && selectedDeviceInfoMap.containsKey(key))
 				return selectedDeviceInfoMap.get(key);

@@ -175,7 +175,8 @@ public class DocScannerFacadeTest {
             public BufferedImage scan(DocScanDevice docScanDevice, String deviceType) {
                 try {
                     return ImageIO.read(this.getClass().getResourceAsStream("/images/stubdoc.png"));
-                } catch (IOException e) { }
+                } catch (IOException e) {
+                }
                 return null;
             }
 

@@ -275,7 +275,7 @@ public class UserDetailDAOImpl implements UserDetailDAO {
 	}
 
 	@Override
-	public void updateUserRolesAndUsername(@NotNull String userId, String username, List<String> roles) {
+	public void updateUserRolesAndUsername( String userId, String username, List<String> roles) {
 		UserDetail userDetail = userDetailRepository.findByIdIgnoreCase(userId);
 
 		if(userDetail == null) {

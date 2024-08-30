@@ -518,4 +518,43 @@ public class MasterSyncServiceImpl extends BaseService implements MasterSyncServ
 	public DocumentType getDocumentType(String docCode, String langCode) {
 		return  masterSyncDao.getDocumentType(docCode, langCode);
 	}
+
+	@Override
+	public List<GenericDto> findLocationByParentHierarchyCode(String code, String hierarchyName,
+															  String langCode) throws RegBaseCheckedException {
+		List<GenericDto> locationDto = new ArrayList<>();
+		if (codeAndlangCodeNullCheck(code, langCode)) {
+			List<Location> masterLocation = masterSyncDao.findLocationByParentLocCode(code,
+					hierarchyName, langCode);
+			for (Location masLocation : masterLocation) {
+				GenericDto location = new GenericDto();
+				location.setCode(masLocation.getCode());
+				location.setName(masLocation.getName());
+				location.setLangCode(masLocation.getLangCode());
+				locationDto.add(location);
+			}
+		} else {
+			LOGGER.info(LOG_REG_MASTER_SYNC, APPLICATION_NAME, APPLICATION_ID,
+					RegistrationConstants.CODE_AND_LANG_CODE_MANDATORY);
+			throw new RegBaseCheckedException(
+					RegistrationExceptionConstants.REG_MASTER_SYNC_SERVICE_IMPL_CODE_AND_LANGCODE.getErrorCode(),
+					RegistrationExceptionConstants.REG_MASTER_SYNC_SERVICE_IMPL_CODE_AND_LANGCODE.getErrorMessage());
+		}
+		return locationDto;
+	}
+	@Override
+	public List<GenericDto> getFieldValues(String fieldName, String hierarchyName, String langCode,
+										   boolean isHierarchical) {
+		try {
+			if(isHierarchical) {
+				return findLocationByParentHierarchyCode(fieldName, hierarchyName,
+						langCode);
+			}
+			return getDynamicField(fieldName, langCode);
+		} catch (RegBaseCheckedException exception) {
+			LOGGER.error("Failed to fetch values for field : " + fieldName, exception);
+		}
+		return Collections.EMPTY_LIST;
+	}
+
 }

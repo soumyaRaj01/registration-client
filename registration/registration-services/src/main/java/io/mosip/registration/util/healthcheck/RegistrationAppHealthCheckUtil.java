@@ -55,7 +55,6 @@ public class RegistrationAppHealthCheckUtil {
 	/** The operating system. */
 	private static OperatingSystem operatingSystem;
 
-
 	static {
 		systemInfo = new SystemInfo();
 		operatingSystem = systemInfo.getOperatingSystem();
@@ -83,6 +82,8 @@ public class RegistrationAppHealthCheckUtil {
 		FileSystem fileSystem = operatingSystem.getFileSystem();
 		String currentDirectory = System.getProperty("user.dir").substring(0, 3);
 		OSFileStore[] fileStores = fileSystem.getFileStores();
+		//OSFileStore[] fileStores = fileSystem.getFileStores().toArray(new OSFileStore[0]);
+		
 		Long diskSpaceThreshold = 80000L;
 		for (OSFileStore fs : fileStores) {
 			if (currentDirectory.equalsIgnoreCase(fs.getMount())) {

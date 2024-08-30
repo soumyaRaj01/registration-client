@@ -1,8 +1,8 @@
 package io.mosip.registration.ref.sarxos;
 
 import com.github.sarxos.webcam.Webcam;
-import io.mosip.registration.api.docscanner.DeviceType;
 import io.mosip.registration.api.docscanner.DocScannerService;
+import io.mosip.registration.api.docscanner.DeviceType;
 import io.mosip.registration.api.docscanner.dto.DocScanDevice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public class WebCamSarxosImpl implements DocScannerService {
     public List<DocScanDevice> getConnectedDevices() {
         List<DocScanDevice> devices = new ArrayList<>();
         for(Webcam webcam : Webcam.getWebcams()) {
-            DocScanDevice docScanDevice = new DocScanDevice();
+        	DocScanDevice docScanDevice = new DocScanDevice();
             docScanDevice.setDeviceType(DeviceType.CAMERA);
             docScanDevice.setName(webcam.getName());
             docScanDevice.setServiceName(getServiceName());

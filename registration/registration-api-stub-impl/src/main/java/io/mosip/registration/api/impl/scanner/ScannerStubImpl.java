@@ -3,6 +3,7 @@ package io.mosip.registration.api.impl.scanner;
 import io.mosip.registration.api.docscanner.DeviceType;
 import io.mosip.registration.api.docscanner.DocScannerService;
 import io.mosip.registration.api.docscanner.dto.DocScanDevice;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

@@ -63,7 +63,7 @@ public class GlobalParamDAOImpl implements GlobalParamDAO {
 	 *
 	 * @see io.mosip.registration.dao.GlobalParamDAO#getGlobalParams(String)
 	 */
-	public Map<String, Object> getGlobalParams(@NotNull String pattern) {
+	public Map<String, Object> getGlobalParams(String pattern) {
 
 		LOGGER.info("Fetching list of global params with key pattern {}", pattern);
 
