@@ -20,6 +20,7 @@ on:
       - 1.*
       - develop
       - MOSIP*
+      - niradev-1.2.0.2-N1
 
 jobs:
   build-regclient:
