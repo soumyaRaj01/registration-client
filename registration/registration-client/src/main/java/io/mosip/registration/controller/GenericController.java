@@ -618,22 +618,88 @@ public class GenericController extends BaseController {
 	}
 
 	private void setTabSelectionChangeEventHandler(TabPane tabPane) {
-
+        final boolean[] ignoreChange = { false };
 		tabPane.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>(){
 			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				if (ignoreChange[0]) {
+					ignoreChange[0] = false;
+					return;
+				}
+
 				LOGGER.debug("Old selection : {} New Selection : {}", oldValue, newValue);
 
 				if (isKeyboardVisible() && keyboardStage != null) {
 					keyboardStage.close();
 				}
+				if (oldValue.intValue() >= 0 && newValue.intValue() != oldValue.intValue()) {
+					if (oldValue.intValue() == 1 || oldValue.intValue() == 2) {
 
-				int newSelection = newValue.intValue() < 0 ? 0 : newValue.intValue();
+						// Prevent the tab from changing immediately
+						ignoreChange[0] = true;
+						tabPane.getSelectionModel().select(oldValue.intValue());
+
+						// Create the confirmation dialog
+						Alert confirmationDialog = new Alert(Alert.AlertType.CONFIRMATION);
+						confirmationDialog.setTitle("Confirmation Required");
+						confirmationDialog.setHeaderText(null);
+						confirmationDialog.setContentText("Are you sure you want to continue?");
+
+						// Set the dialog to non-blocking modality
+						confirmationDialog.initModality(Modality.NONE);
+
+						DialogPane dialogPane = confirmationDialog.getDialogPane();
+
+						// Centering the text
+						Node contentLabel = dialogPane.lookup(".content.label");
+						if (contentLabel != null) {
+							contentLabel.setStyle("-fx-text-alignment: center; -fx-font-size: 14px;");
+						}
+
+						ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+						ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+						confirmationDialog.getButtonTypes().setAll(okButton, cancelButton);
+
+						Button okButtonNode = (Button) dialogPane.lookupButton(okButton);
+						if (okButtonNode != null) {
+							okButtonNode.setStyle("-fx-text-fill: black;;");
+						}
+
+						Button cancelButtonNode = (Button) dialogPane.lookupButton(cancelButton);
+						if (cancelButtonNode != null) {
+							cancelButtonNode.setStyle("-fx-text-fill: black;");
+						}
+
+						// Aligning buttons to the center
+						Node buttonBar = dialogPane.lookup(".button-bar");
+						if (buttonBar != null) {
+							buttonBar.setStyle("-fx-alignment: center;");
+						}
+
+						tabPane.toFront();
+
+						// Defer the dialog display to ensure TabPane is rendered first
+						Platform.runLater(() -> {
+							Optional<ButtonType> result = confirmationDialog.showAndWait();
+							if (result.isPresent() && result.get() == okButton) {
+								// If OK is clicked, proceed to change the tab
+								ignoreChange[0] = true;
+								tabPane.getSelectionModel().select(newValue.intValue());
+							} else {
+								// If Cancel is clicked, remain on the current tab
+								ignoreChange[0] = true;
+								tabPane.getSelectionModel().select(oldValue.intValue());
+							}
+						});
+						return; 
+					}
+				}
+                int newSelection = newValue.intValue() < 0 ? 0 : newValue.intValue();
 				final String newScreenName = tabPane.getTabs().get(newSelection).getId().replace("_tab", EMPTY);
 
-				//Hide continue button in preview page
-				next.setVisible(newScreenName.equals("AUTH") ? false : true);
-				authenticate.setVisible(newScreenName.equals("AUTH") ? true : false);
+				// Hide continue button in preview page
+				next.setVisible(!newScreenName.equals("AUTH"));
+				authenticate.setVisible(newScreenName.equals("AUTH"));
 
 				if(oldValue.intValue() < 0) {
 					tabPane.getSelectionModel().selectFirst();
@@ -678,8 +744,16 @@ public class GenericController extends BaseController {
 				}
 
 				tabPane.getTabs().get(oldValue.intValue()).getStyleClass().remove(TAB_LABEL_ERROR_CLASS);
-				//tabPane.getSelectionModel().select(newSelection);
-				tabPane.getSelectionModel().select(getNextSelection(tabPane, oldValue.intValue(), newSelection));
+				
+				// Safeguard against illegal index range issues
+				int nextSelection = getNextSelection(tabPane, oldValue.intValue(), newSelection);
+				if (nextSelection < oldValue.intValue()) {
+					LOGGER.error("Next selection index is less than the old value");
+					tabPane.getSelectionModel().select(oldValue.intValue());
+					return;
+				}
+
+				tabPane.getSelectionModel().select(nextSelection);
 			}
 		});
 	}
