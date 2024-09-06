@@ -77,6 +77,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.web.WebView;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.SneakyThrows;
 import javafx.scene.image.Image;
