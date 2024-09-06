@@ -21,6 +21,7 @@ on:
       - develop
       - MOSIP*
       - niradev-1.2.0.2-N1
+      - tf_nira_dev
 
 jobs:
   build-regclient:
