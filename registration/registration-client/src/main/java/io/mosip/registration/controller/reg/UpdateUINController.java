@@ -159,10 +159,10 @@ public class UpdateUINController extends BaseController implements Initializable
 				}
 
 				if(newValue) {
-					String process = renewCheckbox.getId();
-					for(String group : groupedProcess.get(process)){
-						((CheckBox)checkBoxKeeper.get(group)).setSelected(true);
-						((CheckBox)checkBoxKeeper.get(group)).setDisable(false);
+//					String process = renewCheckbox.getId();
+					for(Object group : checkBoxKeeper.values()){
+						CheckBox checkBox = (CheckBox) group;
+						 checkBox.setDisable(false);
 					}
 				}
 			}
@@ -179,10 +179,10 @@ public class UpdateUINController extends BaseController implements Initializable
 				}
 
 				if(newValue) {
-					String process = updateCheckbox.getId();
-					for(String group : groupedProcess.get(process)){
-						((CheckBox)checkBoxKeeper.get(group)).setSelected(true);
-						((CheckBox)checkBoxKeeper.get(group)).setDisable(false);
+//					String process = updateCheckbox.getId();
+					for(Object group : checkBoxKeeper.values()){
+						CheckBox checkBox = (CheckBox) group;
+						 checkBox.setDisable(false);
 					}
 				}
 			}

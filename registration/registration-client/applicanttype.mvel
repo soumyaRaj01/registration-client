@@ -271,7 +271,7 @@ else if(userCase==New && citizenshipType==ByRegistration && (fatherNIN != null |
   {
    return "015";
   }
-   else if(userCase==New && citizenshipType==ByRegistration && fatherNIN==null && motherNIN==null && ageCode == MIROR  )
+   else if(userCase==New && citizenshipType==ByRegistration && fatherNIN==null && motherNIN==null && ageCode == MINOR  )
   {
    return "029";
   }
