@@ -501,48 +501,21 @@ public class RegistrationApprovalController extends BaseController implements In
 		actionCounter++;
 
 		ToggleButton tBtn = (ToggleButton) event.getSource();
+		Stage primarystage = null;
 
 		if (tBtn.getId().equals(approvalBtn.getId())) {
 
-			for (Map<String, String> registrationMap : approvalmapList) {
+			primarystage = new Stage();
+			ApprovalController.initData(table.getSelectionModel().getSelectedItem(), packetIds, primarystage,
+					approvalmapList, observableList, table,
+					RegistrationConstants.EOD_PROCESS_REGISTRATIONAPPROVALCONTROLLER);
 
-				if (registrationMap.containsValue(table.getSelectionModel().getSelectedItem().getPacketId())) {
-
-					approvalmapList.remove(registrationMap);
-
-					break;
-				}
-			}
-
-			Map<String, String> map = new WeakHashMap<>();
-			map.put(RegistrationConstants.PACKET_APPLICATION_ID, table.getSelectionModel().getSelectedItem().getId());
-			map.put(RegistrationConstants.PACKET_ID, table.getSelectionModel().getSelectedItem().getPacketId());
-			map.put(RegistrationConstants.STATUSCODE, RegistrationClientStatusCode.APPROVED.getCode());
-			map.put(RegistrationConstants.STATUSCOMMENT, RegistrationConstants.EMPTY);
-			approvalmapList.add(map);
+			loadStage(primarystage, RegistrationConstants.APPROVAL_PAGE);
 
 			authenticateBtn.setDisable(false);
 
-			int focusedIndex = table.getSelectionModel().getFocusedIndex();
-
-			int row = packetIds.get(table.getSelectionModel().getSelectedItem().getPacketId());
-			RegistrationApprovalVO approvalDTO = new RegistrationApprovalVO(
-					table.getSelectionModel().getSelectedItem().getSlno(),
-					table.getSelectionModel().getSelectedItem().getId(),
-					table.getSelectionModel().getSelectedItem().getPacketId(),
-					table.getSelectionModel().getSelectedItem().getDate(),
-					table.getSelectionModel().getSelectedItem().getAcknowledgementFormPath(),
-					table.getSelectionModel().getSelectedItem().getOperatorId(),
-					new Image(getImagePath(RegistrationConstants.TICK_IMG, true)), 
-					table.getSelectionModel().getSelectedItem().getHasBwords());
-			observableList.set(row, approvalDTO);
-			wrapListAndAddFiltering(observableList);
-			table.requestFocus();
-			table.getFocusModel().focus(focusedIndex);
-			table.getSelectionModel().select(focusedIndex);
-
 		} else {
-			Stage primarystage = new Stage();
+			primarystage = new Stage();
 			try {
 
 				if (tBtn.getId().equals(rejectionBtn.getId())) {
