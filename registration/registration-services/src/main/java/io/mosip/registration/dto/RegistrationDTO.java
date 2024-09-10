@@ -96,7 +96,7 @@ public class RegistrationDTO {
 		this.SDK_SCORES.clear();
 		this.ATTEMPTS.clear();
 		this.SELECTED_CODES.clear();
-		//this.preRegistrationId=StringUtils.EMPTY;
+		this.preRegistrationId=StringUtils.EMPTY;
 
 		List<String> allKeys = new ArrayList<>();
 		allKeys.addAll(demographics.keySet());
@@ -307,7 +307,7 @@ public class RegistrationDTO {
 		allIdentityDetails.put("_flow", this.flowType.getCategory());
 		allIdentityDetails.put("_process", this.processId);
 		allIdentityDetails.put("userCase",  this.preRegType != null ? preRegType : this.processId);
-		//allIdentityDetails.put("preRegistrationId",this.preRegistrationId);
+		allIdentityDetails.put("preRegistrationId",this.preRegistrationId);
 
 		allIdentityDetails.put("langCodes", this.selectedLanguagesByApplicant);
 		allIdentityDetails.put("updatableFields",
