@@ -634,7 +634,23 @@ public class GenericController extends BaseController {
 					keyboardStage.close();
 				}
 				if (oldValue.intValue() >= 0 && newValue.intValue() != oldValue.intValue()) {
-					if (oldValue.intValue() == 1 || oldValue.intValue() == 2) {
+					
+				 // Before changing the tab, validate the current screen using isScreenValid()
+			        boolean isValid = isScreenValid(tabPane.getTabs().get(oldValue.intValue()).getId());
+			        
+			     // If validation fails, prevent the tab change
+			        if (!isValid) {
+			            LOGGER.error("Current screen is not fully valid: {}", oldValue.intValue());
+
+			            // Prevent the tab change
+			            ignoreChange[0] = true;
+			            tabPane.getSelectionModel().select(oldValue.intValue());
+
+			            // Since showHideErrorNotification is called inside isScreenValid, no need to call it again here
+			            return;
+			        }
+
+				if (oldValue.intValue() == 1 || oldValue.intValue() == 2) {
 
 						// Prevent the tab from changing immediately
 						ignoreChange[0] = true;
@@ -688,7 +704,7 @@ public class GenericController extends BaseController {
 								tabPane.getSelectionModel().select(newValue.intValue());
 							} else {
 								// If Cancel is clicked, remain on the current tab
-								ignoreChange[0] = true;
+								ignoreChange[0] = false;
 								tabPane.getSelectionModel().select(oldValue.intValue());
 							}
 						});
