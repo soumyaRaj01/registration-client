@@ -101,7 +101,7 @@ public class ApprovalController extends BaseController implements Initializable 
             closeButton.setGraphic(new ImageView(new Image(
                     this.getClass().getResourceAsStream(RegistrationConstants.CLOSE_IMAGE_PATH), 20, 20, true, true)));
             approvalComboBox.setItems(FXCollections
-                    .observableArrayList(reasonList.stream().map(list -> list.getName()).collect(Collectors.toList())));
+                    .observableArrayList(reasonList.stream().filter(reason -> "APR".equals(reason.getRsnCatCode())).map(list -> list.getName()).collect(Collectors.toList())));
             disableColumnsReorder(regApprovalTable);
         } catch (RegBaseCheckedException exRegBaseCheckedException) {
             LOGGER.error(LOG_REG_APPROVAL_CONTROLLER, APPLICATION_NAME, RegistrationConstants.APPLICATION_ID,
