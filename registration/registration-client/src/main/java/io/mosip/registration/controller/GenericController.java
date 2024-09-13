@@ -10,6 +10,8 @@ import java.util.ResourceBundle;
 import static io.mosip.registration.constants.RegistrationConstants.EMPTY;
 import static io.mosip.registration.constants.RegistrationConstants.HASH;
 import static io.mosip.registration.constants.RegistrationConstants.REG_AUTH_PAGE;
+import static io.mosip.registration.constants.RegistrationUIConstants.DEMOGRAPHIC_DETAILS;
+import static io.mosip.registration.constants.RegistrationUIConstants.DOCUMENT_UPLOAD;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -651,7 +653,7 @@ public class GenericController extends BaseController {
 			        }
 					String oldTabName = tabPane.getTabs().get(oldValue.intValue()).getText();
 
-					if("Demographic Details".equals(oldTabName) || "Document Upload".equals(oldTabName)) {
+					if(DEMOGRAPHIC_DETAILS.equals(oldTabName) || DOCUMENT_UPLOAD.equals(oldTabName)) {
 
 						// Prevent the tab from changing immediately
 						ignoreChange[0] = true;

@@ -39,8 +39,9 @@ public class RegistrationUIConstants {
 	// ALERT
 	public static final String ERROR = bundle.getString("ERROR");
 	
-	
-
+	//tab
+	public static final String DEMOGRAPHIC_DETAILS = "Demographic Details";
+	public static final String DOCUMENT_UPLOAD = "Document Upload";
 
 	// ALERT
 	public static final String ERROR_CONSTANT = "ERROR";
