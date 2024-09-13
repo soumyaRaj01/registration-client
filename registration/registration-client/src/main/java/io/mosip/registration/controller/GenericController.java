@@ -10,6 +10,8 @@ import java.util.ResourceBundle;
 import static io.mosip.registration.constants.RegistrationConstants.EMPTY;
 import static io.mosip.registration.constants.RegistrationConstants.HASH;
 import static io.mosip.registration.constants.RegistrationConstants.REG_AUTH_PAGE;
+import static io.mosip.registration.constants.RegistrationUIConstants.DEMOGRAPHIC_DETAILS;
+import static io.mosip.registration.constants.RegistrationUIConstants.DOCUMENT_UPLOAD;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -649,8 +651,9 @@ public class GenericController extends BaseController {
 			            // Since showHideErrorNotification is called inside isScreenValid, no need to call it again here
 			            return;
 			        }
+					String oldTabName = tabPane.getTabs().get(oldValue.intValue()).getText();
 
-			        if (oldValue.intValue() == 1 || oldValue.intValue() == 2) {
+					if(DEMOGRAPHIC_DETAILS.equals(oldTabName) || DOCUMENT_UPLOAD.equals(oldTabName)) {
 
 						// Prevent the tab from changing immediately
 						ignoreChange[0] = true;
