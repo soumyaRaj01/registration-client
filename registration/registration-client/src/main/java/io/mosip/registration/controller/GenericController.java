@@ -650,7 +650,7 @@ public class GenericController extends BaseController {
 			            return;
 			        }
 
-				if (oldValue.intValue() == 1 || oldValue.intValue() == 2) {
+			        if (oldValue.intValue() == 1 || oldValue.intValue() == 2) {
 
 						// Prevent the tab from changing immediately
 						ignoreChange[0] = true;
@@ -660,31 +660,31 @@ public class GenericController extends BaseController {
 						Alert confirmationDialog = new Alert(Alert.AlertType.CONFIRMATION);
 						confirmationDialog.setTitle("Confirmation Required");
 						confirmationDialog.setHeaderText(null);
-						confirmationDialog.setContentText("Are you sure you want to continue?");
+						confirmationDialog.setContentText("Please review your details before proceeding to the next section.");
 
 						// Set the dialog to non-blocking modality
 						confirmationDialog.initModality(Modality.NONE);
 
 						DialogPane dialogPane = confirmationDialog.getDialogPane();
-
+					
 						// Centering the text
 						Node contentLabel = dialogPane.lookup(".content.label");
 						if (contentLabel != null) {
 							contentLabel.setStyle("-fx-text-alignment: center; -fx-font-size: 14px;");
 						}
 
-						ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
-						ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-						confirmationDialog.getButtonTypes().setAll(okButton, cancelButton);
+						ButtonType proceedButton = new ButtonType("Proceed", ButtonBar.ButtonData.OK_DONE);
+						ButtonType reviewButton = new ButtonType("Review Details", ButtonBar.ButtonData.CANCEL_CLOSE);
+						confirmationDialog.getButtonTypes().setAll(proceedButton, reviewButton);
 
-						Button okButtonNode = (Button) dialogPane.lookupButton(okButton);
-						if (okButtonNode != null) {
-							okButtonNode.setStyle("-fx-text-fill: black;;");
+						Button proceedButtonNode = (Button) dialogPane.lookupButton(proceedButton);
+						if (proceedButtonNode != null) {
+							proceedButtonNode.setStyle("-fx-background-color: #d32f2f; -fx-text-fill: white; -fx-font-weight: bold;");
 						}
 
-						Button cancelButtonNode = (Button) dialogPane.lookupButton(cancelButton);
-						if (cancelButtonNode != null) {
-							cancelButtonNode.setStyle("-fx-text-fill: black;");
+						Button reviewButtonNode = (Button) dialogPane.lookupButton(reviewButton);
+						if (reviewButtonNode != null) {
+							reviewButtonNode.setStyle("-fx-text-fill: black;;");
 						}
 
 						// Aligning buttons to the center
@@ -698,7 +698,7 @@ public class GenericController extends BaseController {
 						// Defer the dialog display to ensure TabPane is rendered first
 						Platform.runLater(() -> {
 							Optional<ButtonType> result = confirmationDialog.showAndWait();
-							if (result.isPresent() && result.get() == okButton) {
+							if (result.isPresent() && result.get() == proceedButton) {
 								// If OK is clicked, proceed to change the tab
 								ignoreChange[0] = true;
 								tabPane.getSelectionModel().select(newValue.intValue());
