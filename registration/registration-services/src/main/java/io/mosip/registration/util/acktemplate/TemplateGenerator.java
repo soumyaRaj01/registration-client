@@ -37,6 +37,9 @@ import javax.imageio.ImageIO;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
+import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
@@ -332,6 +335,12 @@ public class TemplateGenerator extends BaseService {
 			data.put("value", registration.getDocuments().get(field.getId()).getValue());
 			data.put("format", registration.getDocuments().get(field.getId()).getFormat());
 			data.put("refNumber", registration.getDocuments().get(field.getId()).getRefNumber());
+			try {
+				data.put("document", convertPdfToPngBase64(registration.getDocuments().get(field.getId()).getDocument()));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 			/*if("POE".equalsIgnoreCase(field.getSubType()) && !registration.getDocuments().get(field.getId()).getType().equalsIgnoreCase("COE")) {
 				templateValues.put(RegistrationConstants.TEMPLATE_EXCEPTION_IMAGE_SOURCE, RegistrationConstants.TEMPLATE_JPG_IMAGE_ENCODING +
@@ -340,6 +349,25 @@ public class TemplateGenerator extends BaseService {
 		}
 		return data;
 	}
+	
+	private static String convertPdfToPngBase64(byte[] base64Pdf) throws IOException {
+		List<String> jpgBase64List = new ArrayList<>();
+        try (PDDocument document = PDDocument.load(new ByteArrayInputStream(base64Pdf))) {
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+            
+            for (int page = 0; page < document.getNumberOfPages(); page++) {
+                BufferedImage image = pdfRenderer.renderImageWithDPI(page, 300);
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                ImageIO.write(image, "png", outputStream);
+                byte[] jpgBytes = outputStream.toByteArray();
+                String base64Jpg = "data:image/png;base64," + StringUtils.newStringUtf8(Base64.encodeBase64(jpgBytes));
+                jpgBase64List.add(base64Jpg);
+            }
+        }
+        
+        JSONArray jsonArray = new JSONArray(jpgBase64List);
+        return jsonArray.toString();
+    }
 
 	private String getFieldLabel(UiFieldDTO field) {
 		List<String> labels = new ArrayList<>();
