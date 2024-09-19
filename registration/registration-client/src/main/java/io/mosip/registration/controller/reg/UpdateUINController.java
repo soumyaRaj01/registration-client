@@ -30,6 +30,7 @@ import io.mosip.registration.controller.FXUtils;
 import io.mosip.registration.controller.GenericController;
 import io.mosip.registration.dto.schema.ProcessSpecDto;
 import io.mosip.registration.dto.schema.UiFieldDTO;
+import io.mosip.registration.util.common.NinValidator;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -101,6 +102,8 @@ public class UpdateUINController extends BaseController implements Initializable
 	@FXML
 	private RadioButton updateCheckbox;
 
+    @Autowired
+	private NinValidator ninValidator;
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -289,8 +292,8 @@ public class UpdateUINController extends BaseController implements Initializable
 				return;
 			}
 
-			if (uinValidatorImpl.validateId(uinId.getText()) && !selectedFieldGroups.isEmpty()) {
-				getRegistrationDTOFromSession().addDemographicField("UIN", uinId.getText());
+			if (ninValidator.validate(uinId.getText()) && !selectedFieldGroups.isEmpty()) {
+				getRegistrationDTOFromSession().addDemographicField("NIN", uinId.getText());
 				getRegistrationDTOFromSession().setUpdatableFieldGroups(selectedFieldGroups);
 				getRegistrationDTOFromSession().setUpdatableFields(new ArrayList<>());
 				getRegistrationDTOFromSession().setBiometricMarkedForUpdate(selectedFieldGroups.contains(RegistrationConstants.BIOMETRICS_GROUP) ? true : false);
@@ -305,7 +308,8 @@ public class UpdateUINController extends BaseController implements Initializable
 			}
 		} catch (InvalidIDException invalidIdException) {
 			LOGGER.error(invalidIdException.getMessage(), invalidIdException);
-			generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.UPDATE_UIN_VALIDATION_ALERT));
+			//generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.UPDATE_UIN_VALIDATION_ALERT));
+		    generateAlert(RegistrationConstants.ERROR, "Please Enter a Valid NIN ID");
 		} catch (Throwable exception) {
 			LOGGER.error(exception.getMessage(), exception);
 			generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.UNABLE_LOAD_REG_PAGE));
