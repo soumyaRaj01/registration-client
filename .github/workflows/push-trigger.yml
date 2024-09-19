@@ -103,7 +103,7 @@ jobs:
         include:
           - SERVICE_LOCATION: registration
             SERVICE_NAME: registration-client
-            BUILD_ARTIFACT: registration-local
+            BUILD_ARTIFACT: registration
             ONLY_DOCKER: true
       fail-fast: false
     name: ${{ matrix.SERVICE_NAME }}
