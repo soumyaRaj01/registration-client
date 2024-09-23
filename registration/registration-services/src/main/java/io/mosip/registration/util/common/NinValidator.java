@@ -1,5 +1,6 @@
 package io.mosip.registration.util.common;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.mosip.kernel.core.idvalidator.exception.InvalidIDException;
@@ -12,8 +13,9 @@ import java.util.regex.Pattern;
  */
 @Component
 public class NinValidator {
+	@Value("${mosip.registration.util.common.nin.regex}")
+	private String regexPattern;
 	public boolean validate(String input) {
-        String regexPattern = "^[a-zA-Z0-9]{14,14}$";
         Pattern pattern = Pattern.compile(regexPattern);
         Matcher matcher = pattern.matcher(input);
         if(matcher.matches()) {
