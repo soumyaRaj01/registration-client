@@ -193,6 +193,9 @@ public class PacketHandlerServiceImpl extends BaseService implements PacketHandl
 		}
 		
 		registrationDTO.setRegistrationId(registrationDTO.getAppId());
+		if(registrationDTO.getFlowType().equals(FlowType.NEW)) {
+			registrationDTO.addDemographicField("part", "1");
+		}
 		
 		Map<String, String> metaInfoMap = new LinkedHashMap<>();
 		try {

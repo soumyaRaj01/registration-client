@@ -81,6 +81,7 @@ import javafx.scene.Node;
 import javafx.scene.web.WebView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import lombok.SneakyThrows;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -691,11 +692,12 @@ public class GenericController extends BaseController {
 						confirmationDialog.setHeaderText(null);
 						confirmationDialog.setContentText("Please review your details before proceeding to the next section.");
 
-						// Set the dialog to non-blocking modality
-						confirmationDialog.initModality(Modality.NONE);
+	                    Stage dialogStage = (Stage) confirmationDialog.getDialogPane().getScene().getWindow();
+	                    dialogStage.initModality(Modality.APPLICATION_MODAL);
+	                    dialogStage.initStyle(StageStyle.UTILITY);
 
 						DialogPane dialogPane = confirmationDialog.getDialogPane();
-					
+
 						// Centering the text
 						Node contentLabel = dialogPane.lookup(".content.label");
 						if (contentLabel != null) {
