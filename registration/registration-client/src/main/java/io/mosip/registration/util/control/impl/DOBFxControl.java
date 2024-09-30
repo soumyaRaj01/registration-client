@@ -192,7 +192,9 @@ public class DOBFxControl extends FxControl {
 					getUiSchemaDTO().getMinimum(), getUiSchemaDTO().getMaximum());
 			if (isValid) {
 				setData(null);
-				refreshFields();
+				if(uiFieldDTO.getDependentFields() != null && !uiFieldDTO.getDependentFields().isEmpty()) {
+					refreshDependentFields(uiFieldDTO.getDependentFields());
+				}
 			}
 		});
 	}

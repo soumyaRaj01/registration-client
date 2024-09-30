@@ -582,6 +582,32 @@ public class GenericController extends BaseController {
 		LOGGER.info("Screen refreshed, Screen: {} visible : {}", screenName, atLeastOneVisible);
 		return atLeastOneVisible;
 	}
+	
+	private boolean refreshScreenVisibilityForDependentFields(String screenName, List<String> dependentFields) {
+		boolean atLeastOneVisible = true;
+		Optional<UiScreenDTO> screenDTO = orderedScreens.values()
+				.stream()
+				.filter(screen -> screen.getName().equals(screenName))
+				.findFirst();
+
+		if(screenDTO.isPresent()) {
+			LOGGER.info("Refreshing Screen: {}", screenName);
+			screenDTO.get().getFields().forEach( field -> {
+				if(dependentFields.contains(field.getId())) {
+					FxControl fxControl = getFxControl(field.getId());
+					if(fxControl != null)
+						fxControl.refresh();
+				}
+			});
+
+			atLeastOneVisible = screenDTO.get()
+					.getFields()
+					.stream()
+					.anyMatch( field -> getFxControl(field.getId()) != null && getFxControl(field.getId()).getNode().isVisible() );
+		}
+		LOGGER.info("Screen refreshed, Screen: {} visible : {}", screenName, atLeastOneVisible);
+		return atLeastOneVisible;
+	}
 
 	private EventHandler getNextActionHandler() {
 		return new EventHandler<ActionEvent>() {
@@ -1135,6 +1161,10 @@ public class GenericController extends BaseController {
 
 	public void refreshFields() {
 		orderedScreens.values().forEach(screen -> { refreshScreenVisibility(screen.getName()); });
+	}
+	
+	public void refreshDependentFields(List<String> dependentFields) {
+		orderedScreens.values().forEach(screen -> { refreshScreenVisibilityForDependentFields(screen.getName(), dependentFields); });
 	}
 
 	/*public List<UiFieldDTO> getProofOfExceptionFields() {

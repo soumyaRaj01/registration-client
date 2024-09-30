@@ -225,7 +225,9 @@ public class DOBAgeFxControl extends FxControl {
 					: dateValidation.validateDate((Pane) node, uiFieldDTO.getId());
 			if (isValid) {
 				setData(null);
-				refreshFields();
+				if(uiFieldDTO.getDependentFields() != null && !uiFieldDTO.getDependentFields().isEmpty()) {
+					refreshDependentFields(uiFieldDTO.getDependentFields());
+				}
 			}
 		});
 	}

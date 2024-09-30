@@ -61,6 +61,7 @@ public class UiFieldDTO {
 	@JsonProperty("exceptionPhotoRequired")
 	private boolean isExceptionPhotoRequired;
 	private List<String> groupProcess;
+	private List<String> dependentFields;
 
 
 	/**

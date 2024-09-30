@@ -284,7 +284,9 @@ public class DropDownFxControl extends FxControl {
 				refreshNextHierarchicalFxControls();
 				demographicChangeActionHandler.actionHandle((Pane) getNode(), node.getId(),	uiFieldDTO.getChangeAction());
 				// Group level visibility listeners
-				refreshFields();
+				if(uiFieldDTO.getDependentFields() != null && !uiFieldDTO.getDependentFields().isEmpty()) {
+					refreshDependentFields(uiFieldDTO.getDependentFields());
+				}
 			}
 		});
 	}

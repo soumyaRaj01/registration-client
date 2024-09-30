@@ -134,7 +134,9 @@ public class CheckBoxFxControl extends FxControl {
 			demographicChangeActionHandler.actionHandle((Pane) getNode(), node.getId(),
 					uiFieldDTO.getChangeAction());
 			// Group level visibility listeners
-			refreshFields();
+			if(uiFieldDTO.getDependentFields() != null && !uiFieldDTO.getDependentFields().isEmpty()) {
+				refreshDependentFields(uiFieldDTO.getDependentFields());
+			}
 		});
 
 	}

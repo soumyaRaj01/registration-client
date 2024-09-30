@@ -172,6 +172,12 @@ public abstract class FxControl  {
 		GenericController genericController = ClientApplication.getApplicationContext().getBean(GenericController.class);
 		genericController.refreshFields();
 	}
+	
+	public void refreshDependentFields(List<String> dependentFields) {
+		LOGGER.info(loggerClassName, APPLICATION_NAME, APPLICATION_ID, "Refreshing fields from fx control");
+		GenericController genericController = ClientApplication.getApplicationContext().getBean(GenericController.class);
+		genericController.refreshDependentFields(dependentFields);
+	}
 
 	/**
 	 *

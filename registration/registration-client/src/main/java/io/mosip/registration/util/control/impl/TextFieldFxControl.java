@@ -146,7 +146,9 @@ public class TextFieldFxControl extends FxControl {
 			}
 			LOGGER.info("invoked from Listener {}",uiFieldDTO.getId());
 			// Group level visibility listeners
-			refreshFields();
+			if(uiFieldDTO.getDependentFields() != null && !uiFieldDTO.getDependentFields().isEmpty()) {
+				refreshDependentFields(uiFieldDTO.getDependentFields());
+			}
 		});
 	}
 

@@ -204,7 +204,9 @@ public class ButtonFxControl extends FxControl {
 			resetButtons(button);
 			if (isValid()) {
 				setData(null);
-				refreshFields();
+				if(uiFieldDTO.getDependentFields() != null && !uiFieldDTO.getDependentFields().isEmpty()) {
+					refreshDependentFields(uiFieldDTO.getDependentFields());
+				}
 			}
 		});
 	}
