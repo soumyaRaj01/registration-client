@@ -597,7 +597,7 @@ public class GenericController extends BaseController {
 				if(dependentFields.contains(field.getId())) {
 					FxControl fxControl = getFxControl(field.getId());
 					if(fxControl != null)
-						fxControl.refresh();
+						fxControl.refreshDependentFields();
 				}
 			});
 

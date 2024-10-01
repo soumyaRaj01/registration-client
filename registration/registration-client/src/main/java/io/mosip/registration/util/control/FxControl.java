@@ -27,6 +27,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Pane;
 
 /**
  * 
@@ -153,6 +154,61 @@ public abstract class FxControl  {
 					break;
 			}
 		}
+		visible(this.node, isFieldVisible(uiFieldDTO));
+	}
+	
+	public void refreshDependentFields() {
+		boolean isFieldVisible =  isFieldVisible(uiFieldDTO);
+		if(!isFieldVisible) {
+			switch (uiFieldDTO.getType()) {
+				case "documentType":
+					getRegistrationDTo().removeDocument(uiFieldDTO.getId());
+					break;
+				case "biometricsType":
+					List<String> requiredAttributes = requiredFieldValidator.getRequiredBioAttributes(uiFieldDTO, getRegistrationDTo());
+					for(String bioAttribute : uiFieldDTO.getBioAttributes()) {
+						if(!requiredAttributes.contains(bioAttribute))
+							getRegistrationDTo().clearBIOCache(uiFieldDTO.getId(), bioAttribute);
+					}
+					break;
+				default:
+					getRegistrationDTo().removeDemographicField(uiFieldDTO.getId());
+					break;
+			}
+		}
+		boolean isRequiredField = requiredFieldValidator.isRequiredField(this.uiFieldDTO, getRegistrationDTo());
+
+		if (!uiFieldDTO.isRequired()) {
+		    Node parentNode = this.node; // Store the node reference
+		    if (parentNode instanceof VBox || parentNode instanceof HBox) {
+		        for (Node child : ((Pane) parentNode).getChildren()) {
+		        	if(child instanceof VBox) {
+		        		for(Node child1 : ((VBox) child).getChildren()) {
+		        			child = child1;
+		        			break;
+		        		}
+		        	}
+		            if (child instanceof Label) {
+		                Label label = (Label) child;
+		                String labelName = label.getText();
+		                if(labelName==null) {
+		                	break;
+		                }
+		                if (isRequiredField) {
+		                    if (!labelName.endsWith("*")) {
+		                        label.setText(labelName + " *");
+		                    }
+		                } else {
+		                    if (labelName.endsWith("*")) {
+		                        label.setText(labelName.substring(0, labelName.length() - 1));
+		                    }
+		                }
+		                break;
+		            }
+		        }
+		    }
+		}
+
 		visible(this.node, isFieldVisible(uiFieldDTO));
 	}
 
