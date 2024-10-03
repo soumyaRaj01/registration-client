@@ -520,6 +520,9 @@ public class DocumentFxControl extends FxControl {
 	}
 
 	public boolean canContinue() {
+		if(!isFieldVisible(this.uiFieldDTO)) {
+			return true;
+		}
 
 		if (requiredFieldValidator == null) {
 			requiredFieldValidator = ClientApplication.getApplicationContext().getBean(RequiredFieldValidator.class);
