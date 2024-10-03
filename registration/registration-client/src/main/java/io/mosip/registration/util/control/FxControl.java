@@ -176,39 +176,30 @@ public abstract class FxControl  {
 					break;
 			}
 		}
-		boolean isRequiredField = requiredFieldValidator.isRequiredField(this.uiFieldDTO, getRegistrationDTo());
-
 		if (!uiFieldDTO.isRequired()) {
+			boolean isRequiredField = requiredFieldValidator.isRequiredField(this.uiFieldDTO, getRegistrationDTo());
 		    Node parentNode = this.node; // Store the node reference
-		    if (parentNode instanceof VBox || parentNode instanceof HBox) {
 		        for (Node child : ((Pane) parentNode).getChildren()) {
 		        	if(child instanceof VBox) {
-		        		for(Node child1 : ((VBox) child).getChildren()) {
-		        			child = child1;
-		        			break;
-		        		}
+		        		child = ((VBox) child).getChildren().get(0);
 		        	}
 		            if (child instanceof Label) {
 		                Label label = (Label) child;
 		                String labelName = label.getText();
-		                if(labelName==null) {
-		                	break;
-		                }
 		                if (isRequiredField) {
 		                    if (!labelName.endsWith("*")) {
 		                        label.setText(labelName + " *");
 		                    }
-		                } else {
+		                }
+		                else {
 		                    if (labelName.endsWith("*")) {
-		                        label.setText(labelName.substring(0, labelName.length() - 1));
+		                        label.setText(labelName.substring(0, labelName.length() - 2));
 		                    }
 		                }
-		                break;
 		            }
+		            break;
 		        }
-		    }
 		}
-
 		visible(this.node, isFieldVisible(uiFieldDTO));
 	}
 
