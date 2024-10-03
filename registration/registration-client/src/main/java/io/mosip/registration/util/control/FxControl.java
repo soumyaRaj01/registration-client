@@ -176,6 +176,7 @@ public abstract class FxControl  {
 					break;
 			}
 		}
+		
 		if (!uiFieldDTO.isRequired()) {
 			boolean isRequiredField = requiredFieldValidator.isRequiredField(this.uiFieldDTO, getRegistrationDTo());
 		    Node parentNode = this.node; // Store the node reference
@@ -186,6 +187,9 @@ public abstract class FxControl  {
 		            if (child instanceof Label) {
 		                Label label = (Label) child;
 		                String labelName = label.getText();
+						if(labelName == null) {
+		                	break;
+		                }
 		                if (isRequiredField) {
 		                    if (!labelName.endsWith("*")) {
 		                        label.setText(labelName + " *");
