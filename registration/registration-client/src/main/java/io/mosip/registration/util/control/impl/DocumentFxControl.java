@@ -543,6 +543,7 @@ public class DocumentFxControl extends FxControl {
 
 	@Override
 	public void selectAndSet(Object data) {
+		refresh();
 		ComboBox<DocumentCategoryDto> comboBox = (ComboBox<DocumentCategoryDto>) getField(uiFieldDTO.getId());
 
 		if(data == null) {
