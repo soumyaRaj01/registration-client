@@ -87,30 +87,6 @@
                                  </rowConstraints>
                               </GridPane>
 
-                               <GridPane GridPane.rowIndex="3">
-                                   <columnConstraints>
-                                       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="30.0" />
-                                       <ColumnConstraints hgrow="SOMETIMES" minWidth="40.0" prefWidth="30.0" />
-                                       <ColumnConstraints hgrow="SOMETIMES" minWidth="40.0" prefWidth="30.0" />
-                                       <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="30.0" />
-                                   </columnConstraints>
-                                   <rowConstraints>
-                                       <RowConstraints minHeight="2.0" prefHeight="2.0" vgrow="SOMETIMES" />
-                                   </rowConstraints>
-                                   <children>
-                                       <RadioButton text="Renewal" fx:id="renewCheckbox" id="RENEWAL" GridPane.columnIndex="1">
-                                           <toggleGroup>
-                                               <ToggleGroup fx:id="process"/>
-                                           </toggleGroup>
-                                       </RadioButton>
-                                       <RadioButton text="Update"  fx:id="updateCheckbox" id="UPDATE" GridPane.columnIndex="2">
-                                           <toggleGroup>
-                                               <fx:reference source="process"/>
-                                           </toggleGroup>
-                                       </RadioButton>
-                                   </children>
-                               </GridPane>
-
                                <GridPane fx:id="contentGridPane" GridPane.rowIndex="4">
                                 <columnConstraints>
                                   <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />

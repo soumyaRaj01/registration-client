@@ -278,7 +278,7 @@ public class PreRegZipHandlingServiceImpl extends BaseService implements PreRegZ
 
 		try {
 			switch (fieldType) {
-				case "string":	return jsonObject.getString(key);
+				case "string":	return jsonObject.get(key) instanceof Boolean ? (jsonObject.getBoolean(key) ? "Y" : "N") : jsonObject.getString(key);
 				case "integer":	return jsonObject.getInt(key);
 				case "number": return jsonObject.getLong(key);
 				case "simpleType":

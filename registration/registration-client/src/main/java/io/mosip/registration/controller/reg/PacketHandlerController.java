@@ -434,7 +434,6 @@ public class PacketHandlerController extends BaseController implements Initializ
 				case NEW:
 				case LOST:
 				case CORRECTION:
-				case RENEWAL:
 					Parent createRoot = getRoot(RegistrationConstants.CREATE_PACKET_PAGE);
 					getScene(createRoot).setRoot(createRoot);
 					getScene(createRoot).getStylesheets().add(ClassLoader.getSystemClassLoader().getResource(getCssName()).toExternalForm());
@@ -444,6 +443,7 @@ public class PacketHandlerController extends BaseController implements Initializ
 					}
 					break;
 				case UPDATE:
+				case RENEWAL:
 					if(registrationController.createRegistrationDTOObject(processId)) {
 						Parent root = BaseController.load(getClass().getResource(RegistrationConstants.UIN_UPDATE),
 								applicationContext.getBundle(registrationController.getSelectedLangList().get(0), RegistrationConstants.LABELS));

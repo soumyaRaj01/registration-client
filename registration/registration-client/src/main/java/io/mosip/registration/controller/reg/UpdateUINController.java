@@ -31,6 +31,7 @@ import io.mosip.registration.controller.GenericController;
 import io.mosip.registration.dto.schema.ProcessSpecDto;
 import io.mosip.registration.dto.schema.UiFieldDTO;
 import io.mosip.registration.util.common.NinValidator;
+import io.mosip.registration.enums.FlowType;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -92,15 +93,9 @@ public class UpdateUINController extends BaseController implements Initializable
 
 	private Map<String, List<UiFieldDTO>> groupedMap;
 
-	private Map<String, List<String>> groupedProcess;
 	private Map<String, Map<String, String>> groupLabels;
 
 	private FXUtils fxUtils;
-	@FXML
-	private RadioButton renewCheckbox;
-
-	@FXML
-	private RadioButton updateCheckbox;
 
     @Autowired
 	private NinValidator ninValidator;
@@ -121,7 +116,7 @@ public class UpdateUINController extends BaseController implements Initializable
 
 		groupedMap = new HashMap<>();
 		groupLabels = new HashMap<>();
-		groupedProcess = new HashMap<>();
+		
 		ProcessSpecDto processSpecDto = getProcessSpec(getRegistrationDTOFromSession().getProcessId(), getRegistrationDTOFromSession().getIdSchemaVersion());
 		processSpecDto.getScreens().forEach(screen -> {
 			screen.getFields().forEach(field -> {
@@ -130,19 +125,6 @@ public class UpdateUINController extends BaseController implements Initializable
 					fields.add(field);
 					groupedMap.put(field.getGroup(), fields);
 
-					if(field.getGroupProcess() != null)
-						for(String process : field.getGroupProcess())
-							if(groupedProcess.containsKey(process)) {
-								List<String> groups = groupedProcess.get(process);
-								if(!groups.contains(field.getGroup()))
-									groups.add(field.getGroup());
-								groupedProcess.put(process, groups);
-							} else {
-								List<String> groups = new ArrayList<>();
-								groups.add(field.getGroup());
-								groupedProcess.put(process, groups);
-							}
-
 					if(field.getGroupLabel() != null) {
 						groupLabels.put(field.getGroup(), field.getGroupLabel());
 					}
@@ -150,48 +132,7 @@ public class UpdateUINController extends BaseController implements Initializable
 			});
 		});
 
-		renewCheckbox.selectedProperty().addListener(new ChangeListener<Boolean>() {
-			@Override
-			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-				getRegistrationDTOFromSession().setPreRegType("RENEWAL");
-
-				for(Object object : checkBoxKeeper.values()) {
-					CheckBox checkBox = (CheckBox) object;
-					checkBox.setSelected(false);
-					checkBox.setDisable(true);
-				}
-
-				if(newValue) {
-//					String process = renewCheckbox.getId();
-					for(Object group : checkBoxKeeper.values()){
-						CheckBox checkBox = (CheckBox) group;
-						 checkBox.setDisable(false);
-					}
-				}
-			}
-		});
-
-		updateCheckbox.selectedProperty().addListener(new ChangeListener<Boolean>() {
-			@Override
-			public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-				getRegistrationDTOFromSession().setPreRegType("UPDATE");
-				for(Object object : checkBoxKeeper.values()) {
-					CheckBox checkBox = (CheckBox) object;
-					checkBox.setSelected(false);
-					checkBox.setDisable(true);
-				}
-
-				if(newValue) {
-//					String process = updateCheckbox.getId();
-					for(Object group : checkBoxKeeper.values()){
-						CheckBox checkBox = (CheckBox) group;
-						 checkBox.setDisable(false);
-					}
-				}
-			}
-		});
-
-
+		
 		scrollPane.prefWidthProperty().bind(demographicHBox.widthProperty());
 		
 		parentFlow = parentFlowPane.getChildren();
@@ -224,7 +165,7 @@ public class UpdateUINController extends BaseController implements Initializable
 		checkBox.setTooltip(new Tooltip(groupLabel));
 		checkBox.getStyleClass().add(RegistrationConstants.updateUinCheckBox);
 		fxUtils.listenOnSelectedCheckBox(checkBox);
-		checkBox.setDisable(true);
+		//checkBox.setDisable(true);
 		checkBoxKeeper.put(groupName, checkBox);
 		
 		GridPane gridPane = new GridPane();
@@ -296,7 +237,13 @@ public class UpdateUINController extends BaseController implements Initializable
 				getRegistrationDTOFromSession().addDemographicField("NIN", uinId.getText());
 				getRegistrationDTOFromSession().setUpdatableFieldGroups(selectedFieldGroups);
 				getRegistrationDTOFromSession().setUpdatableFields(new ArrayList<>());
-				getRegistrationDTOFromSession().setBiometricMarkedForUpdate(selectedFieldGroups.contains(RegistrationConstants.BIOMETRICS_GROUP) ? true : false);
+				
+				if(getRegistrationDTOFromSession().getFlowType().equals(FlowType.RENEWAL)) {
+					getRegistrationDTOFromSession().setBiometricMarkedForUpdate(true);
+				}
+				else {
+					getRegistrationDTOFromSession().setBiometricMarkedForUpdate(selectedFieldGroups.contains(RegistrationConstants.BIOMETRICS_GROUP) ? true : false);
+				}
 
 				Parent createRoot = BaseController.load(
 						getClass().getResource(RegistrationConstants.CREATE_PACKET_PAGE),
