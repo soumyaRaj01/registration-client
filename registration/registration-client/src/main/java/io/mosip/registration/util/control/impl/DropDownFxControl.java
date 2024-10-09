@@ -212,11 +212,17 @@ public class DropDownFxControl extends FxControl {
 			case RegistrationConstants.SIMPLE_TYPE:
 				List<SimpleDto> values = new ArrayList<SimpleDto>();
 				for (String langCode : getRegistrationDTo().getSelectedLanguagesByApplicant()) {
-					Optional<GenericDto> result = getPossibleValues(langCode).stream()
-							.filter(b -> b.getCode().equals(selectedCode)).findFirst();
-					if (result.isPresent()) {
-						SimpleDto simpleDto = new SimpleDto(langCode, result.get().getName());
+					if(langCode.equals(appComboBox.getSelectionModel().getSelectedItem().getLangCode())) {
+						SimpleDto simpleDto = new SimpleDto(langCode, appComboBox.getSelectionModel().getSelectedItem().getName());
 						values.add(simpleDto);
+					}
+					else {
+						Optional<GenericDto> result = getPossibleValues(langCode).stream()
+								.filter(b -> b.getCode().equals(selectedCode)).findFirst();
+						if (result.isPresent()) {
+							SimpleDto simpleDto = new SimpleDto(langCode, result.get().getName());
+							values.add(simpleDto);
+						}
 					}
 				}
 				getRegistrationDTo().addDemographicField(uiFieldDTO.getId(), values);
@@ -269,11 +275,16 @@ public class DropDownFxControl extends FxControl {
 				List<String> toolTipText = new ArrayList<>();
 				String selectedCode = fieldComboBox.getSelectionModel().getSelectedItem().getCode();
 				for (String langCode : getRegistrationDTo().getSelectedLanguagesByApplicant()) {
-					Optional<GenericDto> result = getPossibleValues(langCode).stream()
-							.filter(b -> b.getCode().equals(selectedCode)).findFirst();
-					if (result.isPresent()) {
-						
-						toolTipText.add(result.get().getName());
+					if(langCode.equals(fieldComboBox.getSelectionModel().getSelectedItem().getLangCode())) {
+						toolTipText.add(fieldComboBox.getSelectionModel().getSelectedItem().getName());
+					}
+					else {
+						Optional<GenericDto> result = getPossibleValues(langCode).stream()
+								.filter(b -> b.getCode().equals(selectedCode)).findFirst();
+						if (result.isPresent()) {
+							
+							toolTipText.add(result.get().getName());
+						}
 					}
 				}
 
