@@ -4,6 +4,11 @@ package io.mosip.registration.controller;
 import io.mosip.registration.enums.FlowType;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.Initializable;
+
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -85,6 +90,8 @@ import javafx.stage.StageStyle;
 import lombok.SneakyThrows;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+
+import javax.imageio.ImageIO;
 
 /**
  * {@code GenericController} is to capture the demographic/demo/Biometric
@@ -452,6 +459,22 @@ public class GenericController extends BaseController {
 							break;
 						case "documentType":
 							fxControl.selectAndSet(getRegistrationDTOFromSession().getDocuments().get(field.getId()));
+							var document = getRegistrationDTOFromSession().getDocuments().get(field.getId());
+							if (document != null && document.getDocument() != null && !"pdf".equals(document.getFormat())) {
+								InputStream is = new ByteArrayInputStream(document.getDocument());
+								BufferedImage newBi = null;
+								try {
+									newBi = ImageIO.read(is);
+								} catch (IOException e) {
+									LOGGER.error("Buffered images conversion failed : {}", e);
+								}
+								if (newBi != null) {
+									List<BufferedImage> list = new LinkedList<>();
+									list.add(newBi);
+									fxControl.setData(list);
+									document.setFormat("pdf");
+								}
+							}
 							break;
 						default:
 
