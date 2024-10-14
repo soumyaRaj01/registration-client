@@ -230,6 +230,15 @@ public abstract class FxControl  {
 		genericController.refreshDependentFields(dependentFields);
 	}
 
+	public void resetValue() {
+		GenericController genericController = ClientApplication.getApplicationContext().getBean(GenericController.class);
+		genericController.resetValue();
+	}
+	
+	public void clearToolTipText() {
+		
+	}
+	
 	/**
 	 *
 	 * @return

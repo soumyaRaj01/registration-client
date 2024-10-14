@@ -548,6 +548,9 @@ public class DocumentFxControl extends FxControl {
 
 		if(data == null) {
 			comboBox.getSelectionModel().clearSelection();
+			getRegistrationDTo().removeDocument(uiFieldDTO.getId());
+			getField(uiFieldDTO.getId() + PREVIEW_ICON).setVisible(false);
+			getField(uiFieldDTO.getId() + CLEAR_ID).setVisible(false);
 			return;
 		}
 

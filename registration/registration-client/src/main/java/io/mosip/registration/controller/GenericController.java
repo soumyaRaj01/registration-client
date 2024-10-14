@@ -1191,6 +1191,35 @@ public class GenericController extends BaseController {
 	public void refreshDependentFields(List<String> dependentFields) {
 		orderedScreens.values().forEach(screen -> { refreshScreenVisibilityForDependentFields(screen.getName(), dependentFields); });
 	}
+	
+	public void resetValue() {
+		Map<String, Object> demographics = getRegistrationDTOFromSession().getDemographics();
+		for (UiScreenDTO screenDTO : orderedScreens.values()) {
+			for (UiFieldDTO field : screenDTO.getFields()) {
+				FxControl fxControl = getFxControl(field.getId());
+				if (fxControl != null) {
+					String typeString = fxControl.getUiSchemaDTO().getType();
+					switch (fxControl.getUiSchemaDTO().getType()) {
+						case "biometricsType":
+							fxControl.selectAndSet(null);
+							break;
+						case "documentType":
+							fxControl.selectAndSet(null);
+							break;
+						default:
+							if(!field.getId().equals("userServiceType")) {
+								fxControl.selectAndSet(null);
+//it will read data from field components and set it in registrationDTO along with selectedCodes and ageGroups
+//kind of supporting data
+								fxControl.setData(null);
+								fxControl.clearToolTipText();
+							}
+							break;
+					}
+				}
+			}
+		}
+	}
 
 	/*public List<UiFieldDTO> getProofOfExceptionFields() {
 		return fields.stream().filter(field ->
