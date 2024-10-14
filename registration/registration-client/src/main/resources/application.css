@@ -1411,7 +1411,7 @@ Working on new Css by taleev
 }
 
 .table-view {
-	-fx-table-cell-border-color: #FFFFFF;
+	-fx-table-cell-border-color: transparent;
 	-fx-border-width: 0.0 0.0 0.0 0.0;
 }
 
