@@ -294,12 +294,23 @@ public class DropDownFxControl extends FxControl {
 				setData(null);
 				refreshNextHierarchicalFxControls();
 				demographicChangeActionHandler.actionHandle((Pane) getNode(), node.getId(),	uiFieldDTO.getChangeAction());
+				
+				if (uiFieldDTO.getId().equals("userServiceType")) {	
+					resetValue();		
+				}
+				
 				// Group level visibility listeners
 				if(uiFieldDTO.getDependentFields() != null && !uiFieldDTO.getDependentFields().isEmpty()) {
 					refreshDependentFields(uiFieldDTO.getDependentFields());
 				}
 			}
 		});
+	}
+	
+	@Override
+	public void clearToolTipText() {
+		Label messageLabel = (Label) getField(uiFieldDTO.getId() + RegistrationConstants.MESSAGE);
+		messageLabel.setText(null);
 	}
 
 	private void refreshNextHierarchicalFxControls() {

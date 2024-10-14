@@ -105,7 +105,16 @@ public class BiometricFxControl extends FxControl {
 
 	@Override
 	public void selectAndSet(Object data) {
-
+		List<HBox> modalityButtons = getModalityButtons();
+		
+		if(!modalityButtons.isEmpty() && data == null) { //check the modalityButtons is present or not
+			List<String> requiredAttributes = requiredFieldValidator.getRequiredBioAttributes(uiFieldDTO, getRegistrationDTo());
+			for(String bioAttribute : uiFieldDTO.getBioAttributes()) {
+				if(requiredAttributes.contains(bioAttribute)) {
+					getRegistrationDTo().clearBIOCache(uiFieldDTO.getId(), bioAttribute);
+				}
+			}
+		}
 	}
 
 	@Override
