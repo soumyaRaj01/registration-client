@@ -162,7 +162,7 @@ public class GenericController extends BaseController {
 	private static TreeMap<Integer, UiScreenDTO> orderedScreens = new TreeMap<>();
 	private static Map<String, FxControl> fxControlMap = new HashMap<String, FxControl>();
 	private Stage keyboardStage;
-	private boolean preregExecuted = false;
+	private boolean preregFetching = false;
 	private boolean keyboardVisible = false;
 	private String previousId;
 	private Integer additionalInfoReqIdScreenOrder = null;
@@ -269,7 +269,7 @@ public class GenericController extends BaseController {
 	}
 
 	void executePreRegFetchTask(TextField textField, String processFlow) {
-		preregExecuted=true;
+		preregFetching=true;
 		genericScreen.setDisable(true);
 		progressIndicator.setVisible(true);
 
@@ -339,6 +339,7 @@ public class GenericController extends BaseController {
 		taskService.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
 			@Override
 			public void handle(WorkerStateEvent workerStateEvent) {
+				preregFetching = false;
 				genericScreen.setDisable(false);
 				progressIndicator.setVisible(false);
 			}
@@ -346,11 +347,13 @@ public class GenericController extends BaseController {
 		taskService.setOnFailed(new EventHandler<WorkerStateEvent>() {
 			@Override
 			public void handle(WorkerStateEvent t) {
+				preregFetching = false;
 				LOGGER.debug("Pre Registration Fetch failed");
 				genericScreen.setDisable(false);
 				progressIndicator.setVisible(false);
 			}
 		});
+		
 	}
 	private void executeQRCodeScan() {
 		genericScreen.setDisable(true);
@@ -1195,7 +1198,7 @@ public class GenericController extends BaseController {
 	}
 	
 	public void resetValue() {
-		if(preregExecuted == false) {
+		if(preregFetching == false) {
 			for (UiScreenDTO screenDTO : orderedScreens.values()) {
 				for (UiFieldDTO field : screenDTO.getFields()) {
 					FxControl fxControl = getFxControl(field.getId());
@@ -1205,13 +1208,11 @@ public class GenericController extends BaseController {
 								fxControl.selectAndSet(null);
 								break;
 							case "documentType":
-								fxControl.selectAndSet("remove");
+								fxControl.resetDocValue(null);
 								break;
 							default:
 								if(!field.getId().equals("userServiceType") && screenDTO.getOrder() == 2) {
 									fxControl.selectAndSet(null);
-	//		//it will read data from field components and set it in registrationDTO along with selectedCodes and ageGroups
-	//		//kind of supporting data
 									fxControl.setData(null);
 									fxControl.clearToolTipText();
 								}
@@ -1221,7 +1222,6 @@ public class GenericController extends BaseController {
 				}
 			}
 		}
-		preregExecuted=false;
 	}
 
 	/*public List<UiFieldDTO> getProofOfExceptionFields() {

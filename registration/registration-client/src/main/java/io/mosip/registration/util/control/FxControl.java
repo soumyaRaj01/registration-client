@@ -239,6 +239,10 @@ public abstract class FxControl  {
 		
 	}
 	
+	public  void resetDocValue(Object data) {
+		
+	}
+	
 	/**
 	 *
 	 * @return

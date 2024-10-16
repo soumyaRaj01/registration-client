@@ -550,18 +550,6 @@ public class DocumentFxControl extends FxControl {
 			comboBox.getSelectionModel().clearSelection();
 			return;
 		}
-		
-		if(data == "remove") {
-			getRegistrationDTo().removeDocument(this.uiFieldDTO.getId());
-			TextField textField = (TextField) getField(
-					uiFieldDTO.getId() + RegistrationConstants.DOC_TEXT_FIELD);
-			textField.setText(RegistrationConstants.EMPTY);
-			getField(uiFieldDTO.getId() + PREVIEW_ICON).setVisible(false);
-			getField(uiFieldDTO.getId() + CLEAR_ID).setVisible(false);
-			getField(uiFieldDTO.getId() + PREVIEW_ICON).setManaged(true);
-			getField(uiFieldDTO.getId() + CLEAR_ID).setManaged(true);
-			return;
-		}
 
 		if (comboBox != null) {
 			DocumentDto documentDto = (DocumentDto) data;
@@ -583,6 +571,19 @@ public class DocumentFxControl extends FxControl {
 				auditFactory.audit(AuditEvent.REG_DOC_DELETE, Components.REG_DOCUMENTS, SessionContext.userId(),
 					AuditReferenceIdTypes.USER_ID.getReferenceTypeId());
 			}
+		}
+	}
+	
+	@Override
+	public void resetDocValue(Object data) {
+		if(data==null) {		
+			getRegistrationDTo().removeDocument(this.uiFieldDTO.getId());
+			TextField textField = (TextField) getField(
+					uiFieldDTO.getId() + RegistrationConstants.DOC_TEXT_FIELD);
+			textField.setText(RegistrationConstants.EMPTY);
+			getField(uiFieldDTO.getId() + PREVIEW_ICON).setVisible(false);
+			getField(uiFieldDTO.getId() + CLEAR_ID).setVisible(false);
+			return;
 		}
 	}
 
