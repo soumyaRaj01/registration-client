@@ -548,9 +548,6 @@ public class DocumentFxControl extends FxControl {
 
 		if(data == null) {
 			comboBox.getSelectionModel().clearSelection();
-			getRegistrationDTo().removeDocument(uiFieldDTO.getId());
-			getField(uiFieldDTO.getId() + PREVIEW_ICON).setVisible(false);
-			getField(uiFieldDTO.getId() + CLEAR_ID).setVisible(false);
 			return;
 		}
 
@@ -575,6 +572,17 @@ public class DocumentFxControl extends FxControl {
 					AuditReferenceIdTypes.USER_ID.getReferenceTypeId());
 			}
 		}
+	}
+	
+	@Override
+	public void clearValue() {		
+		getRegistrationDTo().removeDocument(this.uiFieldDTO.getId());
+		TextField textField = (TextField) getField(
+				uiFieldDTO.getId() + RegistrationConstants.DOC_TEXT_FIELD);
+		textField.setText(RegistrationConstants.EMPTY);
+		getField(uiFieldDTO.getId() + PREVIEW_ICON).setVisible(false);
+		getField(uiFieldDTO.getId() + CLEAR_ID).setVisible(false);
+		return;
 	}
 
 	@Override

@@ -235,9 +235,9 @@ public abstract class FxControl  {
 		genericController.resetValue();
 	}
 	
-	public void clearToolTipText() {
-		
-	}
+	public void clearToolTipText() {}
+	
+	public  void clearValue() {}
 	
 	/**
 	 *
