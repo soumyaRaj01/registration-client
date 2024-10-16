@@ -269,7 +269,7 @@ public class GenericController extends BaseController {
 	}
 
 	void executePreRegFetchTask(TextField textField, String processFlow) {
-		preregFetching=true;
+		preregFetching = true;
 		genericScreen.setDisable(true);
 		progressIndicator.setVisible(true);
 
@@ -353,7 +353,6 @@ public class GenericController extends BaseController {
 				progressIndicator.setVisible(false);
 			}
 		});
-		
 	}
 	private void executeQRCodeScan() {
 		genericScreen.setDisable(true);
@@ -1208,7 +1207,7 @@ public class GenericController extends BaseController {
 								fxControl.selectAndSet(null);
 								break;
 							case "documentType":
-								fxControl.resetDocValue(null);
+								fxControl.clearValue();
 								break;
 							default:
 								if(!field.getId().equals("userServiceType") && screenDTO.getOrder() == 2) {
