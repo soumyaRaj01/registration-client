@@ -162,6 +162,7 @@ public class GenericController extends BaseController {
 	private static TreeMap<Integer, UiScreenDTO> orderedScreens = new TreeMap<>();
 	private static Map<String, FxControl> fxControlMap = new HashMap<String, FxControl>();
 	private Stage keyboardStage;
+	private boolean preregExecuted = false;
 	private boolean keyboardVisible = false;
 	private String previousId;
 	private Integer additionalInfoReqIdScreenOrder = null;
@@ -268,6 +269,7 @@ public class GenericController extends BaseController {
 	}
 
 	void executePreRegFetchTask(TextField textField, String processFlow) {
+		preregExecuted=true;
 		genericScreen.setDisable(true);
 		progressIndicator.setVisible(true);
 
@@ -1193,32 +1195,33 @@ public class GenericController extends BaseController {
 	}
 	
 	public void resetValue() {
-		Map<String, Object> demographics = getRegistrationDTOFromSession().getDemographics();
-		for (UiScreenDTO screenDTO : orderedScreens.values()) {
-			for (UiFieldDTO field : screenDTO.getFields()) {
-				FxControl fxControl = getFxControl(field.getId());
-				if (fxControl != null) {
-					String typeString = fxControl.getUiSchemaDTO().getType();
-					switch (fxControl.getUiSchemaDTO().getType()) {
-						case "biometricsType":
-							fxControl.selectAndSet(null);
-							break;
-						case "documentType":
-							fxControl.selectAndSet(null);
-							break;
-						default:
-							if(!field.getId().equals("userServiceType")) {
+		if(preregExecuted == false) {
+			for (UiScreenDTO screenDTO : orderedScreens.values()) {
+				for (UiFieldDTO field : screenDTO.getFields()) {
+					FxControl fxControl = getFxControl(field.getId());
+					if (fxControl != null) {
+						switch (fxControl.getUiSchemaDTO().getType()) {
+							case "biometricsType":
 								fxControl.selectAndSet(null);
-//it will read data from field components and set it in registrationDTO along with selectedCodes and ageGroups
-//kind of supporting data
-								fxControl.setData(null);
-								fxControl.clearToolTipText();
-							}
-							break;
+								break;
+							case "documentType":
+								fxControl.selectAndSet("remove");
+								break;
+							default:
+								if(!field.getId().equals("userServiceType") && screenDTO.getOrder() == 2) {
+									fxControl.selectAndSet(null);
+	//		//it will read data from field components and set it in registrationDTO along with selectedCodes and ageGroups
+	//		//kind of supporting data
+									fxControl.setData(null);
+									fxControl.clearToolTipText();
+								}
+								break;
+						}
 					}
 				}
 			}
 		}
+		preregExecuted=false;
 	}
 
 	/*public List<UiFieldDTO> getProofOfExceptionFields() {
