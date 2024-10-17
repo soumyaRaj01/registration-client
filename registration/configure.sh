@@ -57,6 +57,7 @@ then
   mkdir "${work_dir}"/customimpls
   /usr/bin/unzip "${work_dir}"/custom-impl.zip -d "${work_dir}"/customimpls/
   cp "${work_dir}"/customimpls/*.jar "${work_dir}"/registration-client/target/lib/
+  cp "${work_dir}"/customimpls/*.dll "${work_dir}"/registration-client/target/lib/
 else
   echo "No Custom(scanner & geo-position) implementations found !!"
 fi
