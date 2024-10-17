@@ -759,6 +759,9 @@ public class GenericController extends BaseController {
 							if (result.isPresent() && result.get() == proceedButton) {
 								// If OK is clicked, proceed to change the tab
 								ignoreChange[0] = true;
+								int newSelection = newValue.intValue() < 0 ? 0 : newValue.intValue();
+								final String newScreenName = tabPane.getTabs().get(newSelection).getId().replace("_tab", EMPTY);
+								tabPane.getTabs().get(newSelection).setDisable(!refreshScreenVisibility(newScreenName));
 								tabPane.getSelectionModel().select(newValue.intValue());
 							} else {
 								// If Cancel is clicked, remain on the current tab
