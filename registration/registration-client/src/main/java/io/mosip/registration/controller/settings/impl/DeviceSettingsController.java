@@ -14,6 +14,7 @@ import io.mosip.kernel.core.logger.spi.Logger;
 import io.mosip.registration.api.docscanner.DeviceType;
 import io.mosip.registration.api.docscanner.DocScannerFacade;
 import io.mosip.registration.api.docscanner.dto.DocScanDevice;
+import io.mosip.registration.api.signaturescanner.SignatureFacade;
 import io.mosip.registration.config.AppConfig;
 import io.mosip.registration.constants.RegistrationConstants;
 import io.mosip.registration.constants.RegistrationUIConstants;
@@ -85,6 +86,9 @@ public class DeviceSettingsController extends BaseController implements Settings
 
 	@Autowired
 	private DocScannerFacade docScannerFacade;
+
+	@Autowired
+	private SignatureFacade signatureFacade;
 
 	@Autowired
 	private DocumentScanController documentScanController;
@@ -274,6 +278,12 @@ public class DeviceSettingsController extends BaseController implements Settings
 			if (!scannerDevices.isEmpty()) {
 				++columnsCount;
 			}
+			List<DocScanDevice> signatureScannerDevices = signatureFacade.getConnectedDevices();
+			if (!signatureScannerDevices.isEmpty()) {
+				scannerDevices.addAll(signatureScannerDevices);
+				++columnsCount;
+			}
+
 			if (applicationContext.isPrimaryLanguageRightToLeft()) {
 				subContentGridPane.setNodeOrientation(NodeOrientation.RIGHT_TO_LEFT);
 			}

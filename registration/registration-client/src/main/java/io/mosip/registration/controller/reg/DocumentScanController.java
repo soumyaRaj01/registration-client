@@ -15,9 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 import io.mosip.kernel.core.logger.spi.Logger;
+import io.mosip.registration.api.docscanner.DeviceType;
 import io.mosip.registration.api.docscanner.DocScannerFacade;
 import io.mosip.registration.api.docscanner.DocScannerUtil;
 import io.mosip.registration.api.docscanner.dto.DocScanDevice;
+import io.mosip.registration.api.signaturescanner.SignatureFacade;
 import io.mosip.registration.config.AppConfig;
 import io.mosip.registration.constants.RegistrationConstants;
 import io.mosip.registration.constants.RegistrationUIConstants;
@@ -91,10 +93,18 @@ public class DocumentScanController extends BaseController {
 
 	@Autowired
 	private DocScannerFacade docScannerFacade;
+	
+	@Autowired
+	private SignatureFacade signatureFacade;
 
 	private String selectedScanDeviceName;
 
 	private FxControl fxControl;
+
+	private String subType;
+	
+	private DocScanDevice scanDevice;
+
 
 	public void scan(Stage popupStage) {
 		try {
@@ -102,8 +112,21 @@ public class DocumentScanController extends BaseController {
 			if (scannedPages == null) {
 				scannedPages = new ArrayList<>();
 			}
+			
+			try {
+				if(scanDevice != null) {
+					signatureFacade.stopDevice(scanDevice);
+				}
+			} catch (Exception e){};
+			
+			Optional<DocScanDevice> result = null;
+			if(subType.equals(RegistrationConstants.PROOF_OF_SIGNATURE)) {
+				result = signatureFacade.getConnectedDevices().stream().filter(d -> d.getId().equals(selectedScanDeviceName)).findFirst();
+			} else {
+				result =  docScannerFacade.getConnectedDevices().stream().filter(d -> d.getId().equals(selectedScanDeviceName)).findFirst();
+			}
 
-			Optional<DocScanDevice> result = docScannerFacade.getConnectedDevices().stream().filter(d -> d.getId().equals(selectedScanDeviceName)).findFirst();
+			
 			if(!result.isPresent()) {
 				LOGGER.error("No scan devices found");
 				generateAlert(RegistrationConstants.ERROR,
@@ -111,10 +134,16 @@ public class DocumentScanController extends BaseController {
 				return;
 			}
 
-			result.get().setFrame(null);
-			result.get().setWidth(0);
-			result.get().setHeight(0);
-			BufferedImage bufferedImage = docScannerFacade.scanDocument(result.get(), getValueFromApplicationContext(RegistrationConstants.IMAGING_DEVICE_TYPE));
+			scanDevice = result.get();
+			scanDevice.setFrame(null);
+			BufferedImage bufferedImage = null;
+			
+			if(subType.equals(RegistrationConstants.PROOF_OF_SIGNATURE)) {
+				bufferedImage =signatureFacade.scanDocument(scanDevice, DeviceType.SIGNATURE_PAD.toString());
+			} else {
+				bufferedImage = docScannerFacade.scanDocument(scanDevice, getValueFromApplicationContext(RegistrationConstants.IMAGING_DEVICE_TYPE));
+				
+			}
 
 			if (bufferedImage == null) {
 				LOGGER.error("captured buffered image was null");
@@ -132,6 +161,9 @@ public class DocumentScanController extends BaseController {
 
 		} catch (RuntimeException exception) {
 			LOGGER.error("Exception while scanning documents for registration", exception);
+			generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.SCAN_DOCUMENT_ERROR));
+		}catch (Exception e) {
+			LOGGER.error("Exception while scanning documents for registration", e);
 			generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.SCAN_DOCUMENT_ERROR));
 		}
 	}
@@ -156,16 +188,22 @@ public class DocumentScanController extends BaseController {
 	/**
 	 * This method is to select the device and initialize document scan pop-up
 	 */
-	private void initializeAndShowScanPopup(boolean isPreviewOnly) {
-		List<DocScanDevice> devices = docScannerFacade.getConnectedDevices();
+	private void initializeAndShowScanPopup(boolean isPreviewOnly,String subType) {
+		List<DocScanDevice> devices = null;
+		if(subType.equals(RegistrationConstants.PROOF_OF_SIGNATURE)) {
+			devices = signatureFacade.getConnectedDevices();
+		} else {
+			devices = docScannerFacade.getConnectedDevices();
+		}
+		
 		LOGGER.info("Connected devices : {}", devices);
 
 		if (devices.isEmpty()) {
 			generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.NO_DEVICE_FOUND));
 			return;
 		}
-
-		selectedScanDeviceName = selectedScanDeviceName == null ? devices.get(0).getId() : selectedScanDeviceName;
+		this.subType = subType;
+		selectedScanDeviceName =  devices.get(0).getId() ;
 		Optional<DocScanDevice> result = devices.stream().filter(d -> d.getId().equals(selectedScanDeviceName)).findFirst();
 		LOGGER.info("Selected device name : {}", selectedScanDeviceName);
 
@@ -177,7 +215,7 @@ public class DocumentScanController extends BaseController {
 
 		scanPopUpViewController.docScanDevice = result.get();
 		scanPopUpViewController.init(this,
-				RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.SCAN_DOC_TITLE));
+				RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.SCAN_DOC_TITLE), subType);
 
 		if(isPreviewOnly)
 			scanPopUpViewController.setUpPreview();
@@ -218,13 +256,13 @@ public class DocumentScanController extends BaseController {
 	}
 
 
-	public void scanDocument(String fieldId, FxControl fxControl, boolean isPreviewOnly) {
+	public void scanDocument(String fieldId, FxControl fxControl, boolean isPreviewOnly,String subType) {
 		try {
 			this.fxControl = fxControl;
 
 			loadDataIntoScannedPages(fieldId);
 
-			initializeAndShowScanPopup(isPreviewOnly);
+			initializeAndShowScanPopup(isPreviewOnly,subType);
 
 			LOGGER.info(RegistrationConstants.DOCUMNET_SCAN_CONTROLLER, RegistrationConstants.APPLICATION_NAME,
 					RegistrationConstants.APPLICATION_ID, "Scan window displayed to scan and upload documents");
@@ -252,5 +290,28 @@ public class DocumentScanController extends BaseController {
 	public void setFxControl(FxControl fxControl) {
 		this.fxControl = fxControl;
 	}
+	public BufferedImage saveSignature() throws Exception {
+		if (subType.equals(RegistrationConstants.PROOF_OF_SIGNATURE))
+			try {
+				{
+					Optional<DocScanDevice> result = signatureFacade.getConnectedDevices().stream()
+							.filter(d -> d.getId().equals(selectedScanDeviceName)).findFirst();
+					if (result == null || !result.isPresent()) {
+						LOGGER.error("No scan devices found");
+						generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants
+								.getMessageLanguageSpecific(RegistrationUIConstants.NO_DEVICE_FOUND));
+						return null;
+					}
+					BufferedImage image = signatureFacade.scanDocument(result.get(),
+							DeviceType.SIGNATURE_PAD.toString());
+					signatureFacade.stopDevice(result.get());
+					return image;
+				}
+			} catch (Exception e) {
+				LOGGER.error(e.getMessage(), e);
+			}
+		return null;
+	}
+
 
 }

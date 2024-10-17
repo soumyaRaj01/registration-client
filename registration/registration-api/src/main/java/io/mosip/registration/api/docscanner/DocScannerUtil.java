@@ -1,8 +1,21 @@
 package io.mosip.registration.api.docscanner;
 
-import javafx.scene.image.Image;
-import javafx.scene.image.PixelWriter;
-import javafx.scene.image.WritableImage;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
+
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -13,18 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import javafx.scene.image.Image;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 
 public class DocScannerUtil {
 
@@ -34,7 +38,7 @@ public class DocScannerUtil {
 
     public static byte[] getImageBytesFromBufferedImage(BufferedImage bufferedImage) throws IOException {
         try (ByteArrayOutputStream imagebyteArray = new ByteArrayOutputStream()) {
-            ImageIO.write(bufferedImage, SCANNER_IMG_TYPE, imagebyteArray);
+			ImageIO.write(bufferedImage, SCANNER_IMG_TYPE, imagebyteArray);
             imagebyteArray.flush();
             return imagebyteArray.toByteArray();
         }
@@ -167,4 +171,12 @@ public class DocScannerUtil {
         }
         return wr;
     }
+
+	public static byte[] getImageBytesFromBufferedImageFromPng(BufferedImage bufferedImage) throws IOException {
+		try (ByteArrayOutputStream imagebyteArray = new ByteArrayOutputStream()) {
+			ImageIO.write(bufferedImage, "png", imagebyteArray);
+			imagebyteArray.flush();
+			return imagebyteArray.toByteArray();
+		}
+	}
 }

@@ -2,12 +2,14 @@ package io.mosip.registration.util.control.impl;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.ResourceBundle;
 
-
-import io.mosip.registration.controller.ClientApplication;
-import io.mosip.registration.dto.mastersync.GenericDto;
 import io.mosip.kernel.core.logger.spi.Logger;
+import io.mosip.kernel.core.util.CryptoUtil;
 import io.mosip.registration.api.docscanner.DocScannerUtil;
 import io.mosip.registration.audit.AuditManagerService;
 import io.mosip.registration.config.AppConfig;
@@ -18,17 +20,16 @@ import io.mosip.registration.constants.RegistrationConstants;
 import io.mosip.registration.constants.RegistrationUIConstants;
 import io.mosip.registration.context.ApplicationContext;
 import io.mosip.registration.context.SessionContext;
+import io.mosip.registration.controller.ClientApplication;
 import io.mosip.registration.controller.FXUtils;
-import io.mosip.registration.controller.Initialization;
 import io.mosip.registration.controller.reg.DocumentScanController;
-import io.mosip.registration.dto.schema.UiFieldDTO;
 import io.mosip.registration.dto.mastersync.DocumentCategoryDto;
+import io.mosip.registration.dto.mastersync.GenericDto;
 import io.mosip.registration.dto.packetmanager.DocumentDto;
+import io.mosip.registration.dto.schema.UiFieldDTO;
 import io.mosip.registration.entity.DocumentType;
-import io.mosip.registration.enums.FlowType;
 import io.mosip.registration.service.doc.category.ValidDocumentService;
 import io.mosip.registration.service.sync.MasterSyncService;
-import io.mosip.registration.util.common.ComboBoxAutoComplete;
 import io.mosip.registration.util.control.FxControl;
 import io.mosip.registration.validator.RequiredFieldValidator;
 import javafx.event.ActionEvent;
@@ -65,6 +66,8 @@ public class DocumentFxControl extends FxControl {
 	private String PREVIEW_ICON = "previewIcon";
 
 	private String CLEAR_ID = "clear";
+	
+	private String currentDocSubType = null;
 
 	public DocumentFxControl() {
 		org.springframework.context.ApplicationContext applicationContext = ClientApplication.getApplicationContext();
@@ -79,6 +82,8 @@ public class DocumentFxControl extends FxControl {
 	public FxControl build(UiFieldDTO uiFieldDTO) {
 		this.uiFieldDTO = uiFieldDTO;
 		this.control = this;
+		this.currentDocSubType = uiFieldDTO.getSubType();
+
 
 		HBox hBox = new HBox();
 		hBox.setSpacing(20);
@@ -87,7 +92,9 @@ public class DocumentFxControl extends FxControl {
 		hBox.getChildren().add(create(uiFieldDTO));
 
 		// REF-FIELD
+		if (!uiFieldDTO.getSubType().equals(RegistrationConstants.PROOF_OF_SIGNATURE)) {
 		hBox.getChildren().add(createDocRef(uiFieldDTO.getId()));
+	}
 
 		// CLEAR IMAGE
 		GridPane tickMarkGridPane = getImageGridPane(PREVIEW_ICON, RegistrationConstants.DOC_PREVIEW_ICON);
@@ -200,7 +207,7 @@ public class DocumentFxControl extends FxControl {
 			return;
 		}
 
-		documentScanController.scanDocument(uiFieldDTO.getId(), this,	isPreviewOnly);
+		documentScanController.scanDocument(uiFieldDTO.getId(), this,	isPreviewOnly,currentDocSubType);
 	}
 
 	private VBox createDocRef(String id) {
@@ -350,7 +357,11 @@ public class DocumentFxControl extends FxControl {
 							RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.SCAN_DOCUMENT_EMPTY));
 					return;
 				}
-
+				if (this.currentDocSubType.equals(RegistrationConstants.PROOF_OF_SIGNATURE)) {
+					byte[] byteArray = DocScannerUtil.getImageBytesFromBufferedImageFromPng(bufferedImages.get(0));
+					getRegistrationDTo().addDemographicField(RegistrationConstants.SIGNATURE,
+							CryptoUtil.encodeToPlainBase64(byteArray));
+				} else {
 				String configuredDocType = ApplicationContext.getStringValueFromApplicationMap(RegistrationConstants.DOC_TYPE);
 				byte[] byteArray =  ("pdf".equalsIgnoreCase(configuredDocType)) ?
 						DocScannerUtil.asPDF(bufferedImages,
@@ -396,6 +407,7 @@ public class DocumentFxControl extends FxControl {
 
 				getField(uiFieldDTO.getId() + PREVIEW_ICON).setManaged(true);
 				getField(uiFieldDTO.getId() + CLEAR_ID).setManaged(true);
+			}
 
 				Label label = (Label) getField(uiFieldDTO.getId()+RegistrationConstants.LABEL);
 				label.getStyleClass().clear();
@@ -529,7 +541,15 @@ public class DocumentFxControl extends FxControl {
 		}
 
 		boolean isRequired = requiredFieldValidator.isRequiredField(this.uiFieldDTO, getRegistrationDTo());
-		if (isRequired && getRegistrationDTo().getDocuments().get(this.uiFieldDTO.getId()) == null) {
+		if (isRequired && uiFieldDTO.getSubType().equals(RegistrationConstants.PROOF_OF_SIGNATURE)) {
+			if (getRegistrationDTo().getDemographics().get(RegistrationConstants.SIGNATURE) == null) {
+				Label label = (Label) getField(uiFieldDTO.getId() + RegistrationConstants.LABEL);
+				label.getStyleClass().clear();
+				label.getStyleClass().add(RegistrationConstants.DemoGraphicFieldMessageLabel);
+				label.setVisible(true);
+				return false;
+			}
+		} else if (isRequired && getRegistrationDTo().getDocuments().get(this.uiFieldDTO.getId()) == null) {
 			
 			Label label = (Label) getField(uiFieldDTO.getId() + RegistrationConstants.LABEL);
 			label.getStyleClass().clear();
