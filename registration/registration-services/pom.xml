@@ -306,6 +306,12 @@
 			<groupId>com.github.oshi</groupId>
 			<artifactId>oshi-core</artifactId>
 			<version>3.6.2</version>
+			<exclusions>
+				<exclusion>
+					<groupId>net.java.dev.jna</groupId>
+					<artifactId>jna-platform</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -526,6 +532,12 @@
 			<artifactId>kernel-keymanager-service</artifactId>
 			<version>1.2.0.1-B2</version>
 			<classifier>lib</classifier>
+			<exclusions>
+				<exclusion>
+					<groupId>net.java.dev.jna</groupId>
+					<artifactId>jna</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 	<!--<repositories> <repository> <id>local-maven-repo</id> <url>file:///${basedir}/lib</url>

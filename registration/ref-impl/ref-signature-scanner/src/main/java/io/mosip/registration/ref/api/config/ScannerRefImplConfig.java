@@ -1,4 +1,4 @@
-package io.mosip.registration.api.config;
+package io.mosip.registration.ref.api.config;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
