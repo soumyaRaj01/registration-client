@@ -731,8 +731,9 @@ public class AuthenticationController extends BaseController implements Initiali
 	private void enablePWD() {
 		LOGGER.info("Enabling Password based Authentication Screen in UI");
 
+// Set the title for the password label
 		pwdLabel.setText(
-				ApplicationContext.getInstance().getApplicationLanguageLabelBundle().getString("pwdAuthentication"));
+				ApplicationContext.getInstance().getApplicationLanguageLabelBundle().getString("operatorAuthAppSubmission"));
 		pwdBasedLogin.setVisible(true);
 		username.clear();
 		password.clear();

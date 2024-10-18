@@ -998,8 +998,7 @@ public class GenericController extends BaseController {
 					/* Adding Group label */
 					Label label = new Label(groupEntry.getKey());
 					label.getStyleClass().add("demoGraphicCustomLabel");
-					label.setPadding(new Insets(0, 0, 0, 55));
-					label.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
+					label.setStyle("-fx-font-weight: 700; -fx-font-size: 15px;");
 					//label.setPrefWidth(1200);
 					groupFlowPane.add(label, 0, 0, 2, 1);
 				}
