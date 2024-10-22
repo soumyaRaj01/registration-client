@@ -281,13 +281,6 @@ public class PacketSynchServiceImpl extends BaseService implements PacketSynchSe
 
 			SyncRegistrationDTO syncDto = new SyncRegistrationDTO();
 			syncDto.setRegistrationId(registration.getId());
-			//To Do
-			if(registration.getStatusCode().toUpperCase().equals("RENEWAL")) {
-			   syncDto.setRegistrationType("UPDATE");
-			}
-			else {
-				syncDto.setRegistrationType(registration.getStatusCode().toUpperCase());
-			}
 			syncDto.setRegistrationType(registration.getStatusCode().toUpperCase());
 			syncDto.setPacketId(registration.getPacketId());
 			syncDto.setAdditionalInfoReqId(registration.getAdditionalInfoReqId());
