@@ -35,6 +35,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 
 import io.mosip.kernel.core.idvalidator.exception.InvalidIDException;
 import io.mosip.kernel.core.idvalidator.spi.PridValidator;
@@ -464,19 +466,22 @@ public class GenericController extends BaseController {
 						case "documentType":
 							fxControl.selectAndSet(getRegistrationDTOFromSession().getDocuments().get(field.getId()));
 							var document = getRegistrationDTOFromSession().getDocuments().get(field.getId());
-							if (document != null && document.getDocument() != null && !"pdf".equals(document.getFormat())) {
-								InputStream is = new ByteArrayInputStream(document.getDocument());
-								BufferedImage newBi = null;
+							if (document != null &&"pdf".equals(document.getFormat())) {
+							    // Handle PDF format
 								try {
-									newBi = ImageIO.read(is);
+									PDDocument pdfDoc = PDDocument.load(document.getDocument());
+									PDFRenderer pdfRenderer = new PDFRenderer(pdfDoc);
+									List<BufferedImage> list = new LinkedList<>();
+								    
+								    for (int page = 0; page < pdfDoc.getNumberOfPages(); page++) {
+								        BufferedImage image = pdfRenderer.renderImageWithDPI(page, 300); // Convert PDF to image with 300 DPI
+								        list.add(image);
+								    }
+								    
+								    fxControl.setData(list);
+								    document.setFormat("pdf");
 								} catch (IOException e) {
 									LOGGER.error("Buffered images conversion failed : {}", e);
-								}
-								if (newBi != null) {
-									List<BufferedImage> list = new LinkedList<>();
-									list.add(newBi);
-									fxControl.setData(list);
-									document.setFormat("pdf");
 								}
 							}
 							break;
