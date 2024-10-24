@@ -2714,15 +2714,56 @@ Working on new Css by taleev
 -fx-border-width: 1.0 1.0 1.0 1.0;
 
 }
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
+.text-field-container {
+    -fx-position: relative;
+}
+
+.loading-indicator {
+    -fx-background-image: url('images/loading.gif'); /* Replace with your loading spinner image */
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: 24px 24px;
+    -fx-background-position: right 8px center;
+    -fx-padding: 0 10px 0 0;  /* Add right padding */
+}
+
+.success-indicator {
+    -fx-background-image: url('images/checkmark.png'); /* Replace with your success icon image */
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: 24px 24px;
+    -fx-background-position: right 8px center;
+    -fx-padding: 0 10px 0 0;  /* Add right padding */
+}
+
+.error-indicator {
+    -fx-background-image: url('images/decline.png'); /* Replace with your error icon image */
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: 24px 24px;
+    -fx-background-position: right 8px center;
+    -fx-padding: 0 10px 0 0;  /* Add right padding */
+}
+
+.error-prn-label {
+    -fx-text-fill: red;
+}
+
+.success-prn-label {
+    -fx-text-fill: green;
+}
+
+.prn-validation-style {
+	-fx-background-color: #ffffff;
+}
+
 .demographicField{
 -fx-border-width: 0.0 0.0 2.0 0.0;
 -fx-pref-width: 50.0px;
 }
-<<<<<<< Updated upstream
+
+
+
+
+
 .demoGraphicCustomLabel {
 
     -fx-border-width: 0.0;
@@ -2735,5 +2776,5 @@ Working on new Css by taleev
     -fx-border-radius: 10.0 10.0 10.0 10.0;
 }
 
-=======
->>>>>>> Stashed changes
+
+

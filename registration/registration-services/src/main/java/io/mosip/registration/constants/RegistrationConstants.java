@@ -2015,5 +2015,6 @@ public class RegistrationConstants {
 	public static final String PRINT_ACK_A6_WIDTH = "mosip.registration.ack.printer.a6.width";
 	public static final String PRINT_ACK_A6_HEIGHT = "mosip.registration.ack.printer.a6.height";
 	public static final String A6_ACKNOWLEDGEMENT_TEMPLATE_CODE = "reg_ack_a6slip_template_part1";
+	
 
 }

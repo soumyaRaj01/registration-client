@@ -1,6 +1,5 @@
 package io.mosip.registration.controller;
 
-
 import io.mosip.registration.enums.FlowType;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.Initializable;
@@ -30,7 +29,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import javafx.geometry.Insets;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,12 +55,17 @@ import io.mosip.registration.dto.ErrorResponseDTO;
 import io.mosip.registration.dto.RegistrationDTO;
 import io.mosip.registration.dto.ResponseDTO;
 import io.mosip.registration.dto.SuccessResponseDTO;
+import io.mosip.registration.dto.payments.CheckPRNInTransLogsResponseDTO;
+import io.mosip.registration.dto.payments.CheckPRNStatusResponseDTO;
+import io.mosip.registration.dto.payments.ConsumePRNResponseDTO;
+import io.mosip.registration.dto.payments.PRNVerificationResponse;
 import io.mosip.registration.dto.schema.ProcessSpecDto;
 import io.mosip.registration.dto.schema.UiFieldDTO;
 import io.mosip.registration.dto.schema.UiScreenDTO;
 import io.mosip.registration.entity.LocationHierarchy;
 import io.mosip.registration.exception.RegBaseCheckedException;
 import io.mosip.registration.exception.RegistrationExceptionConstants;
+import io.mosip.registration.service.payments.PrnService;
 import io.mosip.registration.service.sync.PreRegistrationDataSyncService;
 import io.mosip.registration.util.control.FxControl;
 import io.mosip.registration.util.control.impl.BiometricFxControl;
@@ -161,6 +164,13 @@ public class GenericController extends BaseController {
 	@Autowired
 	private PreRegistrationDataSyncService preRegistrationDataSyncService;
 
+	@Autowired
+	private PrnService prnService;
+	
+	private boolean isPrnValid = false;
+
+	private final Map<Node, Label> nodePrnLabelMap = new HashMap<>();
+
 	private static TreeMap<Integer, UiScreenDTO> orderedScreens = new TreeMap<>();
 	private static Map<String, FxControl> fxControlMap = new HashMap<String, FxControl>();
 	private Stage keyboardStage;
@@ -168,16 +178,15 @@ public class GenericController extends BaseController {
 	private boolean keyboardVisible = false;
 	private String previousId;
 	private Integer additionalInfoReqIdScreenOrder = null;
-	public static Map<String, TreeMap<Integer, List<String>>> hierarchyLevels = new HashMap<String,
-			TreeMap<Integer, List<String>>>();
-	public static Map<String, TreeMap<Integer, List<String>>> currentHierarchyMap = new
-			HashMap<String, TreeMap<Integer, List<String>>>();	public static List<UiFieldDTO> fields = new ArrayList<>();
+	public static Map<String, TreeMap<Integer, List<String>>> hierarchyLevels = new HashMap<String, TreeMap<Integer, List<String>>>();
+	public static Map<String, TreeMap<Integer, List<String>>> currentHierarchyMap = new HashMap<String, TreeMap<Integer, List<String>>>();
+	public static List<UiFieldDTO> fields = new ArrayList<>();
 
 	public static Map<String, FxControl> getFxControlMap() {
 		return fxControlMap;
 	}
 
-	//@cifu
+	// @cifu
 	private TextField registrationNumberTextField;
 	@Autowired
 	private QrCodePopUpViewController qrCodePopUpViewController;
@@ -185,7 +194,8 @@ public class GenericController extends BaseController {
 
 	public TextField getRegistrationNumberTextField() {
 		return registrationNumberTextField;
-	}//@cifu
+	}// @cifu
+
 	public void disableAuthenticateButton(boolean disable) {
 		authenticate.setDisable(disable);
 	}
@@ -206,17 +216,17 @@ public class GenericController extends BaseController {
 	}
 
 	private void fillHierarchicalLevelsByLanguage() {
-		for(String langCode : getConfiguredLangCodes()) {
+		for (String langCode : getConfiguredLangCodes()) {
 			TreeMap<Integer, List<String>> hierarchicalData = new TreeMap<>();
-			List<LocationHierarchy> hierarchies =
-					masterSyncDao.getAllLocationHierarchy(langCode);
-			hierarchies.forEach( hierarchy -> {
-				hierarchicalData.computeIfAbsent(hierarchy.getHierarchyLevel(), k ->
-						new ArrayList<>()).add(hierarchy.getHierarchyLevelName());
+			List<LocationHierarchy> hierarchies = masterSyncDao.getAllLocationHierarchy(langCode);
+			hierarchies.forEach(hierarchy -> {
+				hierarchicalData.computeIfAbsent(hierarchy.getHierarchyLevel(), k -> new ArrayList<>())
+						.add(hierarchy.getHierarchyLevelName());
 			});
 			hierarchyLevels.put(langCode, hierarchicalData);
 		}
 	}
+
 	private HBox getPreRegistrationFetchComponent(String processFlow) {
 		String langCode = getRegistrationDTOFromSession().getSelectedLanguagesByApplicant().get(0);
 
@@ -246,20 +256,22 @@ public class GenericController extends BaseController {
 		Button button = new Button();
 		button.setId("fetchBtn");
 		button.getStyleClass().add("demoGraphicPaneContentButton");
-		button.setText(ApplicationContext.getBundle(langCode, RegistrationConstants.LABELS)
-				.getString("fetch"));
+		button.setText(ApplicationContext.getBundle(langCode, RegistrationConstants.LABELS).getString("fetch"));
 
 		Button scanQRbutton = new Button();
 		scanQRbutton.setId("scanQRBtn");
 		scanQRbutton.setGraphic(new ImageView(
-				new Image(this.getClass().getResourceAsStream("/images/qr-code.png"), 25, 25,
-						true, true)));
+				new Image(this.getClass().getResourceAsStream("/images/qr-code.png"), 25, 25, true, true)));
 		scanQRbutton.getStyleClass().add("demoGraphicPaneContentButton");
-		scanQRbutton.setOnAction(event -> {	executeQRCodeScan();});
+		scanQRbutton.setOnAction(event -> {
+			executeQRCodeScan();
+		});
 		innerHBox.getChildren().add(scanQRbutton);
 		innerHBox.getChildren().add(textField);
 
-		button.setOnAction(event -> {executePreRegFetchTask(textField, processFlow);	});
+		button.setOnAction(event -> {
+			executePreRegFetchTask(textField, processFlow);
+		});
 
 		hBox.getChildren().add(innerHBox);
 		hBox.getChildren().add(button);
@@ -290,29 +302,38 @@ public class GenericController extends BaseController {
 							boolean isValid = false;
 							try {
 								isValid = pridValidatorImpl.validateId(textField.getText());
-							} catch (InvalidIDException invalidIDException) { isValid = false; }
+							} catch (InvalidIDException invalidIDException) {
+								isValid = false;
+							}
 
-							if(!isValid) {
-								generateAlertLanguageSpecific(RegistrationConstants.ERROR, RegistrationUIConstants.PRE_REG_ID_NOT_VALID);
+							if (!isValid) {
+								generateAlertLanguageSpecific(RegistrationConstants.ERROR,
+										RegistrationUIConstants.PRE_REG_ID_NOT_VALID);
 								return;
 							}
-							ResponseDTO responseDTO = preRegistrationDataSyncService.getPreRegistration(textField.getText(), false);
+							ResponseDTO responseDTO = preRegistrationDataSyncService
+									.getPreRegistration(textField.getText(), false);
 
 							if (responseDTO.getErrorResponseDTOs() != null
 									&& !responseDTO.getErrorResponseDTOs().isEmpty()
 									&& responseDTO.getErrorResponseDTOs().get(0).getMessage() != null
 									&& responseDTO.getErrorResponseDTOs().get(0).getMessage()
-									.equalsIgnoreCase(RegistrationConstants.CONSUMED_PRID_ERROR_CODE)) {
-								generateAlertLanguageSpecific(RegistrationConstants.ERROR, RegistrationConstants.PRE_REG_CONSUMED_PACKET_ERROR);
+											.equalsIgnoreCase(RegistrationConstants.CONSUMED_PRID_ERROR_CODE)) {
+								generateAlertLanguageSpecific(RegistrationConstants.ERROR,
+										RegistrationConstants.PRE_REG_CONSUMED_PACKET_ERROR);
 								return;
 							}
 
 							if (responseDTO.getSuccessResponseDTO() != null) {
-								String preRegType = (String) responseDTO.getSuccessResponseDTO().getOtherAttributes().get("preRegType");
+								String preRegType = (String) responseDTO.getSuccessResponseDTO().getOtherAttributes()
+										.get("preRegType");
 								getRegistrationDTOFromSession().setPreRegType(preRegType);
 
-								if(processFlow.equals(FlowType.UPDATE.name()) ? !updateFlowAllowedProcess.contains(preRegType) : !processFlow.equals(preRegType)) {
-									generateAlertLanguageSpecific(RegistrationConstants.ERROR, RegistrationConstants.PRE_REG_WRONG_PROCESS_FLOW);
+								if (processFlow.equals(FlowType.UPDATE.name())
+										? !updateFlowAllowedProcess.contains(preRegType)
+										: !processFlow.equals(preRegType)) {
+									generateAlertLanguageSpecific(RegistrationConstants.ERROR,
+											RegistrationConstants.PRE_REG_WRONG_PROCESS_FLOW);
 									return;
 								}
 							}
@@ -322,12 +343,14 @@ public class GenericController extends BaseController {
 								if (responseDTO.getSuccessResponseDTO() != null) {
 									getRegistrationDTOFromSession().setPreRegistrationId(textField.getText());
 									getRegistrationDTOFromSession().setAppId(textField.getText());
-									TabPane tabPane = (TabPane) anchorPane.lookup(HASH+getRegistrationDTOFromSession().getRegistrationId());
+									TabPane tabPane = (TabPane) anchorPane
+											.lookup(HASH + getRegistrationDTOFromSession().getRegistrationId());
 									tabPane.setId(textField.getText());
 									getRegistrationDTOFromSession().setRegistrationId(textField.getText());
 								}
 							} catch (RegBaseCheckedException exception) {
-								generateAlertLanguageSpecific(RegistrationConstants.ERROR, RegistrationConstants.PRE_REG_TO_GET_PACKET_ERROR);
+								generateAlertLanguageSpecific(RegistrationConstants.ERROR,
+										RegistrationConstants.PRE_REG_TO_GET_PACKET_ERROR);
 							}
 						});
 						return null;
@@ -356,6 +379,7 @@ public class GenericController extends BaseController {
 			}
 		});
 	}
+
 	private void executeQRCodeScan() {
 		genericScreen.setDisable(true);
 		Service<Void> taskService = new Service<Void>() {
@@ -370,15 +394,15 @@ public class GenericController extends BaseController {
 					@Override
 					protected Void call() {
 						Platform.runLater(() -> {
-							qrCodePopUpViewController.init("Scan QR Code");});
+							qrCodePopUpViewController.init("Scan QR Code");
+						});
 						return null;
 					}
 				};
 			}
 		};
 		taskService.start();
-		taskService.setOnSucceeded(new EventHandler<WorkerStateEvent>()
-		{
+		taskService.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
 			@Override
 			public void handle(WorkerStateEvent workerStateEvent) {
 				genericScreen.setDisable(false);
@@ -392,6 +416,7 @@ public class GenericController extends BaseController {
 			}
 		});
 	}
+
 	private HBox getAdditionalInfoRequestIdComponent() {
 		String langCode = getRegistrationDTOFromSession().getSelectedLanguagesByApplicant().get(0);
 		HBox hBox = new HBox();
@@ -413,7 +438,7 @@ public class GenericController extends BaseController {
 		textField.textProperty().addListener((observable, oldValue, newValue) -> {
 			getRegistrationDTOFromSession().setAdditionalInfoReqId(newValue);
 			getRegistrationDTOFromSession().setAppId(newValue.split("-")[0]);
-			TabPane tabPane = (TabPane) anchorPane.lookup(HASH+getRegistrationDTOFromSession().getRegistrationId());
+			TabPane tabPane = (TabPane) anchorPane.lookup(HASH + getRegistrationDTOFromSession().getRegistrationId());
 			tabPane.setId(getRegistrationDTOFromSession().getAppId());
 			getRegistrationDTOFromSession().setRegistrationId(getRegistrationDTOFromSession().getAppId());
 		});
@@ -422,36 +447,37 @@ public class GenericController extends BaseController {
 	}
 
 	private boolean isAdditionalInfoRequestIdProvided(UiScreenDTO screenDTO) {
-		Node node =  anchorPane.lookup("#additionalInfoRequestId");
-		if(node == null) {
+		Node node = anchorPane.lookup("#additionalInfoRequestId");
+		if (node == null) {
 			LOGGER.debug("#additionalInfoRequestId component is not created!");
-			return true; //as the element is not present, it's either not required / enabled.
+			return true; // as the element is not present, it's either not required / enabled.
 		}
 
 		TextField textField = (TextField) node;
 		boolean provided = (textField.getText() != null && !textField.getText().isBlank());
 
-		if(screenDTO.getOrder() < additionalInfoReqIdScreenOrder)
-			return true; //bypass check as current screen order is less than the screen it is displayed in.
+		if (screenDTO.getOrder() < additionalInfoReqIdScreenOrder)
+			return true; // bypass check as current screen order is less than the screen it is displayed
+							// in.
 
 		if (!provided) {
-			showHideErrorNotification(ApplicationContext.getBundle(ApplicationContext.applicationLanguage(), RegistrationConstants.MESSAGES)
+			showHideErrorNotification(ApplicationContext
+					.getBundle(ApplicationContext.applicationLanguage(), RegistrationConstants.MESSAGES)
 					.getString(RegistrationUIConstants.ADDITIONAL_INFO_REQ_ID_MISSING));
 		}
 		return provided;
 	}
 
-	private void loadPreRegSync(ResponseDTO responseDTO) throws RegBaseCheckedException{
+	private void loadPreRegSync(ResponseDTO responseDTO) throws RegBaseCheckedException {
 		auditFactory.audit(AuditEvent.REG_DEMO_PRE_REG_DATA_FETCH, Components.REG_DEMO_DETAILS, SessionContext.userId(),
 				AuditReferenceIdTypes.USER_ID.getReferenceTypeId());
 
 		SuccessResponseDTO successResponseDTO = responseDTO.getSuccessResponseDTO();
 		List<ErrorResponseDTO> errorResponseDTOList = responseDTO.getErrorResponseDTOs();
 
-		if (errorResponseDTOList != null && !errorResponseDTOList.isEmpty() ||
-				successResponseDTO==null ||
-				successResponseDTO.getOtherAttributes() == null ||
-				!successResponseDTO.getOtherAttributes().containsKey(RegistrationConstants.REGISTRATION_DTO)) {
+		if (errorResponseDTOList != null && !errorResponseDTOList.isEmpty() || successResponseDTO == null
+				|| successResponseDTO.getOtherAttributes() == null
+				|| !successResponseDTO.getOtherAttributes().containsKey(RegistrationConstants.REGISTRATION_DTO)) {
 			throw new RegBaseCheckedException(RegistrationExceptionConstants.PRE_REG_SYNC_FAIL.getErrorCode(),
 					RegistrationExceptionConstants.PRE_REG_SYNC_FAIL.getErrorMessage());
 		}
@@ -491,42 +517,45 @@ public class GenericController extends BaseController {
 							fxControl.selectAndSet(getRegistrationDTOFromSession().getDemographics().get(field.getId()) != null ? getRegistrationDTOFromSession().getDemographics().get(field.getId()) : demographicsCopy.get(field.getId()));
 //it will read data from field components and set it in registrationDTO along with selectedCodes and ageGroups
 //kind of supporting data
-							fxControl.setData(getRegistrationDTOFromSession().getDemographics().get(field.getId()) != null ? getRegistrationDTOFromSession().getDemographics().get(field.getId()) : demographicsCopy.get(field.getId()));
+						fxControl.setData(getRegistrationDTOFromSession().getDemographics().get(field.getId()) != null
+								? getRegistrationDTOFromSession().getDemographics().get(field.getId())
+								: demographicsCopy.get(field.getId()));
 
-							break;
+						break;
 					}
 				}
 			}
 		}
 	}
 
-
 	private void getScreens(List<UiScreenDTO> screenDTOS) {
-		screenDTOS.forEach( dto -> {
+		screenDTOS.forEach(dto -> {
 			orderedScreens.put(dto.getOrder(), dto);
 		});
 	}
 
 	private Map<String, List<UiFieldDTO>> getFieldsBasedOnAlignmentGroup(List<UiFieldDTO> screenFields) {
 		Map<String, List<UiFieldDTO>> groupedScreenFields = new LinkedHashMap<>();
-		if(screenFields == null || screenFields.isEmpty())
+		if (screenFields == null || screenFields.isEmpty())
 			return groupedScreenFields;
 
-		//Applies only during Update flow
-		if(getRegistrationDTOFromSession().getUpdatableFieldGroups() != null) {
-			screenFields = screenFields.stream()
-					.filter(f -> f.getGroup() != null && (getRegistrationDTOFromSession().getUpdatableFieldGroups().contains(f.getGroup()) ||
-							getRegistrationDTOFromSession().getDefaultUpdatableFieldGroups().contains(f.getGroup())) )
+		// Applies only during Update flow
+		if (getRegistrationDTOFromSession().getUpdatableFieldGroups() != null) {
+			screenFields = screenFields.stream().filter(f -> f.getGroup() != null
+					&& (getRegistrationDTOFromSession().getUpdatableFieldGroups().contains(f.getGroup())
+							|| getRegistrationDTOFromSession().getDefaultUpdatableFieldGroups().contains(f.getGroup())))
 					.collect(Collectors.toList());
-			screenFields.forEach(f -> { getRegistrationDTOFromSession().getUpdatableFields().add(f.getId()); });
+			screenFields.forEach(f -> {
+				getRegistrationDTOFromSession().getUpdatableFields().add(f.getId());
+			});
 		}
 
-		screenFields.forEach( field -> {
-			String alignmentGroup = field.getAlignmentGroup() == null ? field.getId()+"TemplateGroup"
+		screenFields.forEach(field -> {
+			String alignmentGroup = field.getAlignmentGroup() == null ? field.getId() + "TemplateGroup"
 					: field.getAlignmentGroup();
 
-			if(field.isInputRequired()) {
-				if(!groupedScreenFields.containsKey(alignmentGroup))
+			if (field.isInputRequired()) {
+				if (!groupedScreenFields.containsKey(alignmentGroup))
 					groupedScreenFields.put(alignmentGroup, new LinkedList<UiFieldDTO>());
 
 				groupedScreenFields.get(alignmentGroup).add(field);
@@ -544,7 +573,7 @@ public class GenericController extends BaseController {
 		midRowConstraints.setPercentHeight(96);
 		RowConstraints bottomRowConstraints = new RowConstraints();
 		bottomRowConstraints.setPercentHeight(2);
-		gridPane.getRowConstraints().addAll(topRowConstraints,midRowConstraints, bottomRowConstraints);
+		gridPane.getRowConstraints().addAll(topRowConstraints, midRowConstraints, bottomRowConstraints);
 
 		ColumnConstraints columnConstraint1 = new ColumnConstraints();
 		columnConstraint1.setPercentWidth(5);
@@ -553,8 +582,7 @@ public class GenericController extends BaseController {
 		ColumnConstraints columnConstraint3 = new ColumnConstraints();
 		columnConstraint3.setPercentWidth(5);
 
-		gridPane.getColumnConstraints().addAll(columnConstraint1, columnConstraint2,
-				columnConstraint3);
+		gridPane.getColumnConstraints().addAll(columnConstraint1, columnConstraint2, columnConstraint3);
 
 		return gridPane;
 	}
@@ -588,29 +616,26 @@ public class GenericController extends BaseController {
 		authenticate.setOnAction(getRegistrationAuthActionHandler());
 	}
 
-	/*private String getScreenName(Tab tab) {
-		return tab.getId().replace("_tab", EMPTY);
-	}*/
+	/*
+	 * private String getScreenName(Tab tab) { return tab.getId().replace("_tab",
+	 * EMPTY); }
+	 */
 
 	private boolean refreshScreenVisibility(String screenName) {
 		boolean atLeastOneVisible = true;
-		Optional<UiScreenDTO> screenDTO = orderedScreens.values()
-				.stream()
-				.filter(screen -> screen.getName().equals(screenName))
-				.findFirst();
+		Optional<UiScreenDTO> screenDTO = orderedScreens.values().stream()
+				.filter(screen -> screen.getName().equals(screenName)).findFirst();
 
-		if(screenDTO.isPresent()) {
+		if (screenDTO.isPresent()) {
 			LOGGER.info("Refreshing Screen: {}", screenName);
-			screenDTO.get().getFields().forEach( field -> {
+			screenDTO.get().getFields().forEach(field -> {
 				FxControl fxControl = getFxControl(field.getId());
-				if(fxControl != null)
+				if (fxControl != null)
 					fxControl.refresh();
 			});
 
-			atLeastOneVisible = screenDTO.get()
-					.getFields()
-					.stream()
-					.anyMatch( field -> getFxControl(field.getId()) != null && getFxControl(field.getId()).getNode().isVisible() );
+			atLeastOneVisible = screenDTO.get().getFields().stream().anyMatch(
+					field -> getFxControl(field.getId()) != null && getFxControl(field.getId()).getNode().isVisible());
 		}
 		LOGGER.info("Screen refreshed, Screen: {} visible : {}", screenName, atLeastOneVisible);
 		return atLeastOneVisible;
@@ -646,14 +671,14 @@ public class GenericController extends BaseController {
 		return new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				TabPane tabPane = (TabPane)
-						anchorPane.lookup(HASH+getRegistrationDTOFromSession().getRegistrationId());
+				TabPane tabPane = (TabPane) anchorPane
+						.lookup(HASH + getRegistrationDTOFromSession().getRegistrationId());
 				int selectedIndex = tabPane.getSelectionModel().getSelectedIndex();
-				while(selectedIndex < tabPane.getTabs().size()) {
+				while (selectedIndex < tabPane.getTabs().size()) {
 					selectedIndex++;
 					String newScreenName = tabPane.getTabs().get(selectedIndex).getId().replace("_tab", EMPTY);
 					tabPane.getTabs().get(selectedIndex).setDisable(!refreshScreenVisibility(newScreenName));
-					if(!tabPane.getTabs().get(selectedIndex).isDisabled()) {
+					if (!tabPane.getTabs().get(selectedIndex).isDisabled()) {
 						tabPane.getSelectionModel().select(selectedIndex);
 						break;
 					}
@@ -667,11 +692,12 @@ public class GenericController extends BaseController {
 			@SneakyThrows
 			@Override
 			public void handle(ActionEvent event) {
-				TabPane tabPane = (TabPane) anchorPane.lookup(HASH+getRegistrationDTOFromSession().getRegistrationId());
+				TabPane tabPane = (TabPane) anchorPane
+						.lookup(HASH + getRegistrationDTOFromSession().getRegistrationId());
 				String incompleteScreen = getInvalidScreenName(tabPane);
 
-				if(incompleteScreen == null) {
-					generateAlert(RegistrationConstants.ERROR, incompleteScreen +" Screen with ERROR !");
+				if (incompleteScreen == null) {
+					generateAlert(RegistrationConstants.ERROR, incompleteScreen + " Screen with ERROR !");
 					return;
 				}
 				authenticationController.goToNextPage();
@@ -680,8 +706,8 @@ public class GenericController extends BaseController {
 	}
 
 	private void setTabSelectionChangeEventHandler(TabPane tabPane) {
-        final boolean[] ignoreChange = { false };
-		tabPane.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>(){
+		final boolean[] ignoreChange = { false };
+		tabPane.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
 			@Override
 			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
 				if (ignoreChange[0]) {
@@ -695,24 +721,25 @@ public class GenericController extends BaseController {
 					keyboardStage.close();
 				}
 				if (oldValue.intValue() >= 0 && newValue.intValue() != oldValue.intValue()) {
-					
-				 // Before changing the tab, validate the current screen using isScreenValid()
-			        boolean isValid = isScreenValid(tabPane.getTabs().get(oldValue.intValue()).getId());
-			        
-			     // If validation fails, prevent the tab change
-			        if (!isValid) {
-			            LOGGER.error("Current screen is not fully valid: {}", oldValue.intValue());
 
-			            // Prevent the tab change
-			            ignoreChange[0] = true;
-			            tabPane.getSelectionModel().select(oldValue.intValue());
+					// Before changing the tab, validate the current screen using isScreenValid()
+					boolean isValid = isScreenValid(tabPane.getTabs().get(oldValue.intValue()).getId());
 
-			            // Since showHideErrorNotification is called inside isScreenValid, no need to call it again here
-			            return;
-			        }
+					// If validation fails, prevent the tab change
+					if (!isValid) {
+						LOGGER.error("Current screen is not fully valid: {}", oldValue.intValue());
+
+						// Prevent the tab change
+						ignoreChange[0] = true;
+						tabPane.getSelectionModel().select(oldValue.intValue());
+
+						// Since showHideErrorNotification is called inside isScreenValid, no need to
+						// call it again here
+						return;
+					}
 					String oldTabName = tabPane.getTabs().get(oldValue.intValue()).getText();
 
-					if(DEMOGRAPHIC_DETAILS.equals(oldTabName) || DOCUMENT_UPLOAD.equals(oldTabName)) {
+					if (DEMOGRAPHIC_DETAILS.equals(oldTabName) || DOCUMENT_UPLOAD.equals(oldTabName)) {
 
 						// Prevent the tab from changing immediately
 						ignoreChange[0] = true;
@@ -722,11 +749,12 @@ public class GenericController extends BaseController {
 						Alert confirmationDialog = new Alert(Alert.AlertType.CONFIRMATION);
 						confirmationDialog.setTitle("Confirmation Required");
 						confirmationDialog.setHeaderText(null);
-						confirmationDialog.setContentText("Please review your details before proceeding to the next section.");
+						confirmationDialog
+								.setContentText("Please review your details before proceeding to the next section.");
 
-	                    Stage dialogStage = (Stage) confirmationDialog.getDialogPane().getScene().getWindow();
-	                    dialogStage.initModality(Modality.APPLICATION_MODAL);
-	                    dialogStage.initStyle(StageStyle.UTILITY);
+						Stage dialogStage = (Stage) confirmationDialog.getDialogPane().getScene().getWindow();
+						dialogStage.initModality(Modality.APPLICATION_MODAL);
+						dialogStage.initStyle(StageStyle.UTILITY);
 
 						DialogPane dialogPane = confirmationDialog.getDialogPane();
 
@@ -742,7 +770,8 @@ public class GenericController extends BaseController {
 
 						Button proceedButtonNode = (Button) dialogPane.lookupButton(proceedButton);
 						if (proceedButtonNode != null) {
-							proceedButtonNode.setStyle("-fx-background-color: #d32f2f; -fx-text-fill: white; -fx-font-weight: bold;");
+							proceedButtonNode.setStyle(
+									"-fx-background-color: #d32f2f; -fx-text-fill: white; -fx-font-weight: bold;");
 						}
 
 						Button reviewButtonNode = (Button) dialogPane.lookupButton(reviewButton);
@@ -774,60 +803,60 @@ public class GenericController extends BaseController {
 								tabPane.getSelectionModel().select(oldValue.intValue());
 							}
 						});
-						return; 
+						return;
 					}
 				}
-                int newSelection = newValue.intValue() < 0 ? 0 : newValue.intValue();
+				int newSelection = newValue.intValue() < 0 ? 0 : newValue.intValue();
 				final String newScreenName = tabPane.getTabs().get(newSelection).getId().replace("_tab", EMPTY);
 
 				// Hide continue button in preview page
 				next.setVisible(!newScreenName.equals("AUTH"));
 				authenticate.setVisible(newScreenName.equals("AUTH"));
 
-				if(oldValue.intValue() < 0) {
+				if (oldValue.intValue() < 0) {
 					tabPane.getSelectionModel().selectFirst();
 					return;
 				}
 
-				//request to load Preview / Auth page, allowed only when no errors are found in visible screens
-				if((newScreenName.equals("AUTH") || newScreenName.equals("PREVIEW"))) {
+				// request to load Preview / Auth page, allowed only when no errors are found in
+				// visible screens
+				if ((newScreenName.equals("AUTH") || newScreenName.equals("PREVIEW"))) {
 					String invalidScreenName = getInvalidScreenName(tabPane);
-					if(invalidScreenName.equals(EMPTY)) {
+					if (invalidScreenName.equals(EMPTY)) {
 						notification.setVisible(false);
 						loadPreviewOrAuthScreen(tabPane, tabPane.getTabs().get(newValue.intValue()));
 						return;
-					}
-					else {
+					} else {
 						tabPane.getSelectionModel().select(oldValue.intValue());
 						return;
 					}
 				}
 
-				//Refresh screen visibility
+				// Refresh screen visibility
 				tabPane.getTabs().get(newSelection).setDisable(!refreshScreenVisibility(newScreenName));
 				boolean isSelectedDisabledTab = tabPane.getTabs().get(newSelection).isDisabled();
 
-				//selecting disabled tab, take no action, stay in the same screen
-				if(isSelectedDisabledTab) {
+				// selecting disabled tab, take no action, stay in the same screen
+				if (isSelectedDisabledTab) {
 					tabPane.getSelectionModel().select(oldValue.intValue());
 					return;
 				}
 
-				//traversing back is allowed without a need to validate current / next screen
-				if(oldValue.intValue() > newSelection) {
+				// traversing back is allowed without a need to validate current / next screen
+				if (oldValue.intValue() > newSelection) {
 					tabPane.getSelectionModel().select(newValue.intValue());
 					return;
 				}
 
-				//traversing forward is always one step next
-				if(!isScreenValid(tabPane.getTabs().get(oldValue.intValue()).getId())) {
+				// traversing forward is always one step next
+				if (!isScreenValid(tabPane.getTabs().get(oldValue.intValue()).getId())) {
 					LOGGER.error("Current screen is not fully valid : {}", oldValue.intValue());
 					tabPane.getSelectionModel().select(oldValue.intValue());
 					return;
 				}
 
 				tabPane.getTabs().get(oldValue.intValue()).getStyleClass().remove(TAB_LABEL_ERROR_CLASS);
-				
+
 				// Safeguard against illegal index range issues
 				int nextSelection = getNextSelection(tabPane, oldValue.intValue(), newSelection);
 				if (nextSelection < oldValue.intValue()) {
@@ -842,7 +871,7 @@ public class GenericController extends BaseController {
 	}
 
 	private int getNextSelection(TabPane tabPane, int oldSelection, int newSelection) {
-		if (newSelection-oldSelection <= 1) {
+		if (newSelection - oldSelection <= 1) {
 			return newSelection;
 		}
 		for (int i = oldSelection + 1; i < newSelection; i++) {
@@ -854,22 +883,36 @@ public class GenericController extends BaseController {
 	}
 
 	private boolean isScreenValid(final String screenName) {
-		Optional<UiScreenDTO> result = orderedScreens.values()
-				.stream().filter(screen -> screen.getName().equals(screenName.replace("_tab", EMPTY))).findFirst();
+		Optional<UiScreenDTO> result = orderedScreens.values().stream()
+				.filter(screen -> screen.getName().equals(screenName.replace("_tab", EMPTY))).findFirst();
 
 		boolean isValid = true;
-		if(result.isPresent()) {
+		if (result.isPresent()) {
 
-			if(!isAdditionalInfoRequestIdProvided(result.get())) {
-				showHideErrorNotification(ApplicationContext.getBundle(ApplicationContext.applicationLanguage(), RegistrationConstants.MESSAGES)
+			if (!isAdditionalInfoRequestIdProvided(result.get())) {
+				showHideErrorNotification(ApplicationContext
+						.getBundle(ApplicationContext.applicationLanguage(), RegistrationConstants.MESSAGES)
 						.getString(RegistrationUIConstants.ADDITIONAL_INFO_REQ_ID_MISSING));
 				return false;
 			}
 
-			for(UiFieldDTO field : result.get().getFields()) {
-				if(getFxControl(field.getId()) != null && !getFxControl(field.getId()).canContinue()) {
+			for (UiFieldDTO field : result.get().getFields()) {
+				
+				// Validate PRN differently
+				if(field.getId().equalsIgnoreCase("PRN") && !isPrnValid) {
+					LOGGER.error("PRN verification failed");
+					String label = getFxControl(field.getId()).getUiSchemaDTO().getLabel()
+							.getOrDefault(ApplicationContext.applicationLanguage(), field.getId());
+					showHideErrorNotification(label);
+					isValid = false;
+					break;
+				}
+
+				
+				if (getFxControl(field.getId()) != null && !getFxControl(field.getId()).canContinue()) {
 					LOGGER.error("Screen validation , fieldId : {} has invalid value", field.getId());
-					String label = getFxControl(field.getId()).getUiSchemaDTO().getLabel().getOrDefault(ApplicationContext.applicationLanguage(), field.getId());
+					String label = getFxControl(field.getId()).getUiSchemaDTO().getLabel()
+							.getOrDefault(ApplicationContext.applicationLanguage(), field.getId());
 					showHideErrorNotification(label);
 					isValid = false;
 					break;
@@ -889,36 +932,37 @@ public class GenericController extends BaseController {
 		toolTip.prefWidthProperty().bind(notification.widthProperty());
 		toolTip.setWrapText(true);
 		notification.setTooltip(toolTip);
-		notification.setText((fieldName == null) ? EMPTY : ApplicationContext.getBundle(ApplicationContext.applicationLanguage(), RegistrationConstants.MESSAGES)
-				.getString("SCREEN_VALIDATION_ERROR") + " [ " + fieldName + " ]");
+		notification
+				.setText(
+						(fieldName == null) ? EMPTY
+								: ApplicationContext
+										.getBundle(ApplicationContext.applicationLanguage(),
+												RegistrationConstants.MESSAGES)
+										.getString("SCREEN_VALIDATION_ERROR") + " [ " + fieldName + " ]");
 	}
 
 	private String getInvalidScreenName(TabPane tabPane) {
 		String errorScreen = EMPTY;
-		for(UiScreenDTO screen : orderedScreens.values()) {
+		for (UiScreenDTO screen : orderedScreens.values()) {
 			LOGGER.error("Started to validate screen : {} ", screen.getName());
 
-			if(!isAdditionalInfoRequestIdProvided(screen)) {
+			if (!isAdditionalInfoRequestIdProvided(screen)) {
 				LOGGER.error("Screen validation failed {}, Additional Info request Id is required", screen.getName());
 				errorScreen = screen.getName();
 				break;
 			}
 
-			boolean anyInvalidField = screen.getFields()
-					.stream()
-					.anyMatch( field -> getFxControl(field.getId()) != null &&
-							getFxControl(field.getId()).canContinue() == false );
+			boolean anyInvalidField = screen.getFields().stream().anyMatch(
+					field -> getFxControl(field.getId()) != null && getFxControl(field.getId()).canContinue() == false);
 
 			Optional<Tab> result = tabPane.getTabs().stream()
-					.filter(t -> t.getId().equalsIgnoreCase(screen.getName()+"_tab"))
-					.findFirst();
+					.filter(t -> t.getId().equalsIgnoreCase(screen.getName() + "_tab")).findFirst();
 			if (anyInvalidField && result.isPresent()) {
 				LOGGER.error("Screen validation failed {}", screen.getName());
 				errorScreen = screen.getName();
 				result.get().getStyleClass().add(TAB_LABEL_ERROR_CLASS);
 				break;
-			}
-			else if (result.isPresent())
+			} else if (result.isPresent())
 				result.get().getStyleClass().remove(TAB_LABEL_ERROR_CLASS);
 		}
 		return errorScreen;
@@ -941,11 +985,12 @@ public class GenericController extends BaseController {
 		RegistrationDTO registrationDTO = getRegistrationDTOFromSession();
 		LOGGER.debug("Populating Dynamic screens for process : {}", registrationDTO.getProcessId());
 		initialize(registrationDTO);
-		ProcessSpecDto processSpecDto = getProcessSpec(registrationDTO.getProcessId(), registrationDTO.getIdSchemaVersion());
+		ProcessSpecDto processSpecDto = getProcessSpec(registrationDTO.getProcessId(),
+				registrationDTO.getIdSchemaVersion());
 		getScreens(processSpecDto.getScreens());
 		TabPane tabPane = createTabPane(processSpecDto);
 
-		for(UiScreenDTO screenDTO : orderedScreens.values()) {
+		for (UiScreenDTO screenDTO : orderedScreens.values()) {
 			Map<String, List<UiFieldDTO>> screenFieldGroups = getFieldsBasedOnAlignmentGroup(screenDTO.getFields());
 
 			List<String> labels = new ArrayList<>();
@@ -953,15 +998,15 @@ public class GenericController extends BaseController {
 				labels.add(screenDTO.getLabel().get(langCode));
 			});
 
-			String tabNameInApplicationLanguage = screenDTO.getLabel().get(getRegistrationDTOFromSession().getSelectedLanguagesByApplicant().get(0));
+			String tabNameInApplicationLanguage = screenDTO.getLabel()
+					.get(getRegistrationDTOFromSession().getSelectedLanguagesByApplicant().get(0));
 
-			if(screenFieldGroups == null || screenFieldGroups.isEmpty())
+			if (screenFieldGroups == null || screenFieldGroups.isEmpty())
 				continue;
 
 			Tab screenTab = new Tab();
-			screenTab.setId(screenDTO.getName()+"_tab");
-			screenTab.setText(tabNameInApplicationLanguage == null ?
-					labels.get(0) : tabNameInApplicationLanguage);
+			screenTab.setId(screenDTO.getName() + "_tab");
+			screenTab.setText(tabNameInApplicationLanguage == null ? labels.get(0) : tabNameInApplicationLanguage);
 			screenTab.setTooltip(new Tooltip(String.join(RegistrationConstants.SLASH, labels)));
 
 			GridPane screenGridPane = getScreenGridPane(screenDTO.getName());
@@ -969,25 +1014,24 @@ public class GenericController extends BaseController {
 			screenGridPane.prefHeightProperty().bind(tabPane.heightProperty());
 
 			int rowIndex = 0;
-			GridPane gridPane = getScreenGroupGridPane(screenGridPane.getId()+"_col_1", screenGridPane);
+			GridPane gridPane = getScreenGroupGridPane(screenGridPane.getId() + "_col_1", screenGridPane);
 
-			if(screenDTO.isPreRegFetchRequired()) {
+			if (screenDTO.isPreRegFetchRequired()) {
 				gridPane.add(getPreRegistrationFetchComponent(processSpecDto.getFlow()), 0, rowIndex++);
 			}
-			if(screenDTO.isAdditionalInfoRequestIdRequired()) {
+			if (screenDTO.isAdditionalInfoRequestIdRequired()) {
 				additionalInfoReqIdScreenOrder = screenDTO.getOrder();
 				gridPane.add(getAdditionalInfoRequestIdComponent(), 0, rowIndex++);
 			}
 
-			for(Entry<String, List<UiFieldDTO>> groupEntry : screenFieldGroups.entrySet()) {
+			for (Entry<String, List<UiFieldDTO>> groupEntry : screenFieldGroups.entrySet()) {
 				GridPane groupFlowPane = new GridPane();
 				groupFlowPane.prefWidthProperty().bind(gridPane.widthProperty());
 				groupFlowPane.setHgap(20);
 				groupFlowPane.setVgap(20);
 
-				if(screenDTO.getName().equals("DemographicDetails")) {
+				if (screenDTO.getName().equals("DemographicDetails")) {
 					groupFlowPane.getStyleClass().add("preRegParentPaneSection");
-
 
 //					groupFlowPane.getStyleClass().add(RegistrationConstants.DEMOGRAPHIC_GROUP);
 					groupFlowPane.setPadding(new Insets(20, 0, 20, 20));
@@ -1007,35 +1051,54 @@ public class GenericController extends BaseController {
 					//label.setPrefWidth(1200);
 					groupFlowPane.add(label, 0, 0, 2, 1);
 				}
-				int fieldIndex=0;
-				for(UiFieldDTO fieldDTO : groupEntry.getValue()) {
+				int fieldIndex = 0;
+				for (UiFieldDTO fieldDTO : groupEntry.getValue()) {
 					try {
 						FxControl fxControl = buildFxElement(fieldDTO);
-						if(fxControl.getNode() instanceof GridPane) {
-							((GridPane)fxControl.getNode()).prefWidthProperty().bind(groupFlowPane.widthProperty());
+						if (fxControl.getNode() instanceof GridPane) {
+							((GridPane) fxControl.getNode()).prefWidthProperty().bind(groupFlowPane.widthProperty());
 						}
 
-						if(screenDTO.getName().equals("DemographicDetails")) {
+						if (screenDTO.getName().equals("DemographicDetails")) {
 							fxControl.getNode().getStyleClass().add("demoGraphicCustomField");
 
-							groupFlowPane.add( fxControl.getNode(), (fieldIndex % 3), (fieldIndex / 3) + 1);
+							groupFlowPane.add(fxControl.getNode(), (fieldIndex % 3), (fieldIndex / 3) + 1);
 							fieldIndex++;
+
+							// Only if field is PRN
+							if (fieldDTO.getId().equalsIgnoreCase("PRN")) {
+									
+								Node node = fxControl.getNode();
+	
+								node.setOnKeyReleased(event -> {
+						            // Handle PRN verification
+					                handlePRNVerification(
+					                        fxControl.getData().toString(),
+					                        node,
+					                        processSpecDto.getFlow(),
+					                        registrationDTO.getRegistrationId(),
+					                        fxControl,
+					                        groupFlowPane
+					                    );
+
+						        });
+							}
+
 						} else {
-							if(screenDTO.getName().equals("Documents")) {
+							if (screenDTO.getName().equals("Documents")) {
 								fxControl.getNode().getStyleClass().add(RegistrationConstants.DOCUMENT_COMBOBOX_FIELD);
 							}
 							groupFlowPane.getChildren().add(fxControl.getNode());
 						}
-					} catch (Exception exception){
+					} catch (Exception exception) {
 						LOGGER.error("Failed to build control " + fieldDTO.getId(), exception);
 					}
 				}
-				//Hide introducer grouping for adults
-				if(groupEntry.getKey().equals("Introducer")) {
-					groupFlowPane.visibleProperty().bind(Bindings.or(
-							groupFlowPane.getChildren().get(1).visibleProperty(),
-							groupFlowPane.getChildren().get(2).visibleProperty())
-					);
+				// Hide introducer grouping for adults
+				if (groupEntry.getKey().equals("Introducer")) {
+					groupFlowPane.visibleProperty()
+							.bind(Bindings.or(groupFlowPane.getChildren().get(1).visibleProperty(),
+									groupFlowPane.getChildren().get(2).visibleProperty()));
 				}
 				gridPane.add(groupFlowPane, 0, rowIndex++);
 			}
@@ -1049,11 +1112,198 @@ public class GenericController extends BaseController {
 			tabPane.getTabs().add(screenTab);
 		}
 
-		//refresh to reflect the initial visibility configuration
+		// refresh to reflect the initial visibility configuration
 		refreshFields();
 		addPreviewAndAuthScreen(tabPane);
 	}
 
+	/**
+	 * This method helps in verifying Payment Registration Numbers (PRNs) with the NIRA Payment Gateway service 
+	 * and returns true or false if valid (status is paid and not consumed before)
+	 * 
+	 * @param prnText
+	 * @param processFlow
+	 * @param regId
+	 * @return
+	 */
+	public PRNVerificationResponse verifyPRN(final String prnText, final String processFlow, final String regId) {
+
+	    CheckPRNStatusResponseDTO responseDTO = prnService.checkPRNStatus(prnText);
+
+	    if (responseDTO != null) {
+	        if (responseDTO.getStatusCode().equalsIgnoreCase("T")) {
+	            if (responseDTO.getProcessFlow().equalsIgnoreCase(processFlow)) {
+	                Boolean prnCheck = checkPrnInTranscLogs(prnText, regId).isValid();
+	                if (prnCheck == null) {
+	                    return new PRNVerificationResponse(false, "Verification failed.");
+	                }
+
+	                if (!prnCheck) {
+	                    return new PRNVerificationResponse(true, "PRN is valid.");
+	                }
+	            } else {
+	                return new PRNVerificationResponse(false, String.format("Verification failed: PRN isn't for %s usecase", processFlow));
+	            }
+	        } else {
+	            return new PRNVerificationResponse(false, String.format("Verification failed: PRN isn't paid"));
+	        }
+	    }
+	    return new PRNVerificationResponse(false, "Verification failed: PRN doesn't exist.");
+	}
+
+
+	/**
+	 * This method checks whether the PRN was consumed before / used before
+	 * 
+	 * 
+	 * @param prnText
+	 * @param regId
+	 * @return
+	 */
+	private PRNVerificationResponse checkPrnInTranscLogs(final String prnText, final String regId) {
+	    CheckPRNInTransLogsResponseDTO logsResponse = null;
+
+	    try {
+	        logsResponse = prnService.checkPrnInTransLogs(prnText);
+	    } catch (Exception e) {
+	    	LOGGER.error("Transaction logs service unreachable: " + e.getMessage());
+	        return new PRNVerificationResponse(false, "Failed to reach PRN service");
+	    }
+
+	    if (logsResponse != null) {
+	        if (logsResponse.isPresentInLogs() && logsResponse.getRegIdTagged() != null) {
+	            if (regId.equals(logsResponse.getRegIdTagged())) {
+	            	LOGGER.info("PRN is present in logs but matches the current session regId.");
+	                return new PRNVerificationResponse(false, "PRN matches the current regId.");
+	            } else {
+	            	LOGGER.info(String.format("PRN is already consumed and tagged to a different regId: %s", logsResponse.getRegIdTagged()));
+	                return new PRNVerificationResponse(false, "PRN already used");
+	            }
+	        }
+	    }
+
+	    return new PRNVerificationResponse(false, "PRN is not consumed.");
+	}
+
+
+	/**
+	 * This method consumes a PRN as used
+	 * 
+	 * @param prnText
+	 * @param regId
+	 * @return
+	 */
+	private PRNVerificationResponse consumePrnAsUsed(final String prnText, final String regId) {
+	    ConsumePRNResponseDTO consumeResponse = null;
+
+	    try {
+	        consumeResponse = prnService.consumePrn(prnText, regId);
+	    } catch (Exception e) {
+	    	LOGGER.error("Failed to reach consume PRN service: " + e.getMessage());
+	        return new PRNVerificationResponse(false, "Failed to reach PRN service");
+	    }
+
+	    if (consumeResponse != null) {
+	        if (!consumeResponse.isConsumedSucess()) {
+	            if (consumeResponse.getRegIdTaggedToPrn() != null) {
+	                if (regId.equals(consumeResponse.getRegIdTaggedToPrn())) {
+	                	LOGGER.info("PRN is already tagged to the current session regId. PRN consumption successful");
+	                    return new PRNVerificationResponse(true, "PRN is valid");
+	                } else {
+	                	LOGGER.info(String.format("PRN is tagged to a different regId: %s", consumeResponse.getRegIdTaggedToPrn()));
+	                    return new PRNVerificationResponse(false, "PRN already used");
+	                }
+	            } else {
+	            	LOGGER.info("PRN consumption failed: No regId tagged to this PRN.");
+	                return new PRNVerificationResponse(false, "PRN consumption failed");
+	            }
+	        }
+	        LOGGER.info("PRN consumption successful");
+	        return new PRNVerificationResponse(true, "PRN is valid");
+	    }
+	    LOGGER.error("PRN consumption failed: No response from service.");
+	    return new PRNVerificationResponse(false, "PRN consumption failed");
+	}
+
+
+	private void updatePRNValidationMessage(Label validationLabel, String message, boolean isSuccess) {
+		if (validationLabel != null) {
+			validationLabel.setText(message);
+
+			// Apply custom styles based on success or failure
+			if (isSuccess) {
+				validationLabel.getStyleClass().removeAll("error-prn-label");
+				validationLabel.getStyleClass().add("success-prn-label");
+			} else {
+				validationLabel.getStyleClass().removeAll("success-prn-label");
+				validationLabel.getStyleClass().add("error-prn-label");
+			}
+
+			validationLabel.setVisible(true);
+		}
+	}
+
+	/**
+	 * This method handles the PRN verification overall and displays corresponding messages if PRN is valid or not
+	 * 
+	 * @param prnText
+	 * @param node
+	 * @param processSpecFlow
+	 * @param registrationId
+	 * @param fxControl
+	 * @param parentGridPane
+	 */
+	private void handlePRNVerification(String prnText, Node node, String processSpecFlow, String registrationId, FxControl fxControl, GridPane parentGridPane) {
+	    showLoadingPRNIndicator(node);
+
+	    new Thread(() -> {
+	        try {
+	            Thread.sleep(3000);
+
+	            PRNVerificationResponse verificationResponse = verifyPRN(prnText, processSpecFlow, registrationId);
+	            isPrnValid = verificationResponse.isValid();
+
+	            Platform.runLater(() -> {
+	                removeLoadingPRNIndicator(node);
+
+	                // Locate the existing PRN validation label inside the GridPane
+	                Label validationLabel = (Label) parentGridPane.lookup("#PRNengMessage");
+
+	                if (isPrnValid) {
+	                	PRNVerificationResponse consumeResponse = consumePrnAsUsed(prnText, registrationId);
+	                    updatePRNIndicator(node, consumeResponse.isValid());
+	                    updatePRNValidationMessage(validationLabel, consumeResponse.getMessage(), consumeResponse.isValid());
+	                } else {
+	                    updatePRNIndicator(node, false);
+	                    updatePRNValidationMessage(validationLabel, verificationResponse.getMessage(), false);
+	                }
+	            });
+	        } catch (InterruptedException e) {
+	            e.printStackTrace();
+	        }
+	    }).start();
+	}
+
+
+
+	private void showLoadingPRNIndicator(Node node) {
+		node.getStyleClass().removeAll("success-indicator", "error-indicator");
+		node.getStyleClass().add("loading-indicator");
+	}
+
+	private void removeLoadingPRNIndicator(Node node) {
+		node.getStyleClass().remove("loading-indicator");
+	}
+
+	private void updatePRNIndicator(Node node, boolean isVerified) {
+		node.getStyleClass().removeAll("loading-indicator", "success-indicator", "error-indicator");
+
+		if (isVerified) {
+			node.getStyleClass().add("success-indicator");
+		} else {
+			node.getStyleClass().add("error-indicator");
+		}
+	}
 
 	private void addPreviewAndAuthScreen(TabPane tabPane) throws Exception {
 		List<String> previewLabels = new ArrayList<>();
@@ -1084,32 +1334,34 @@ public class GenericController extends BaseController {
 
 	private void loadPreviewOrAuthScreen(TabPane tabPane, Tab tab) {
 		switch (tab.getId()) {
-			case "PREVIEW":
-				try {
-					tabPane.getSelectionModel().select(tab);
-					tab.setContent(getPreviewContent(tabPane));
-				} catch (Exception exception) {
-					LOGGER.error("Failed to load preview page!!, clearing registration data.");
-					generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.UNABLE_LOAD_PREVIEW_PAGE));
-				}
-				break;
+		case "PREVIEW":
+			try {
+				tabPane.getSelectionModel().select(tab);
+				tab.setContent(getPreviewContent(tabPane));
+			} catch (Exception exception) {
+				LOGGER.error("Failed to load preview page!!, clearing registration data.");
+				generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants
+						.getMessageLanguageSpecific(RegistrationUIConstants.UNABLE_LOAD_PREVIEW_PAGE));
+			}
+			break;
 
-			case "AUTH":
-				try {
-					tabPane.getSelectionModel().select(tab);
-					tab.setContent(loadAuthenticationPage(tabPane));
-					authenticationController.initData(ProcessNames.PACKET.getType());
-				} catch (Exception exception) {
-					LOGGER.error("Failed to load auth page!!, clearing registration data.");
-					generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants.getMessageLanguageSpecific(RegistrationUIConstants.UNABLE_LOAD_APPROVAL_PAGE));
-				}
-				break;
+		case "AUTH":
+			try {
+				tabPane.getSelectionModel().select(tab);
+				tab.setContent(loadAuthenticationPage(tabPane));
+				authenticationController.initData(ProcessNames.PACKET.getType());
+			} catch (Exception exception) {
+				LOGGER.error("Failed to load auth page!!, clearing registration data.");
+				generateAlert(RegistrationConstants.ERROR, RegistrationUIConstants
+						.getMessageLanguageSpecific(RegistrationUIConstants.UNABLE_LOAD_APPROVAL_PAGE));
+			}
+			break;
 		}
 	}
 
 	private Node getPreviewContent(TabPane tabPane) throws Exception {
 		String content = registrationPreviewController.getPreviewContent();
-		if(content != null) {
+		if (content != null) {
 			final WebView webView = new WebView();
 			webView.setId("webView");
 			webView.prefWidthProperty().bind(tabPane.widthProperty());
@@ -1126,78 +1378,78 @@ public class GenericController extends BaseController {
 	}
 
 	private Node loadAuthenticationPage(TabPane tabPane) throws Exception {
-		GridPane gridPane = (GridPane)BaseController.load(getClass().getResource(REG_AUTH_PAGE));
+		GridPane gridPane = (GridPane) BaseController.load(getClass().getResource(REG_AUTH_PAGE));
 		gridPane.prefWidthProperty().bind(tabPane.widthProperty());
 		gridPane.prefHeightProperty().bind(tabPane.heightProperty());
 
 		Node node = gridPane.lookup("#backButton");
-		if(node != null) {
+		if (node != null) {
 			node.setVisible(false);
 			node.setDisable(true);
 		}
 
 		node = gridPane.lookup("#operatorAuthContinue");
-		if(node != null) {
+		if (node != null) {
 			node.setVisible(false);
 			node.setDisable(true);
 		}
 		return gridPane;
 	}
 
-
 	private FxControl buildFxElement(UiFieldDTO uiFieldDTO) throws Exception {
 		LOGGER.info("Building fxControl for field : {}", uiFieldDTO.getId());
 		FxControl fxControl = null;
 
-		if (uiFieldDTO.getControlType() != null ) {
+		if (uiFieldDTO.getControlType() != null) {
 			switch (uiFieldDTO.getControlType()) {
-				case CONTROLTYPE_TEXTFIELD:
-					fxControl = new TextFieldFxControl().build(uiFieldDTO);
-					break;
+			case CONTROLTYPE_TEXTFIELD:
+				fxControl = new TextFieldFxControl().build(uiFieldDTO);
+				break;
 
-				case CONTROLTYPE_BIOMETRICS:
-					fxControl = new BiometricFxControl(/*getProofOfExceptionFields()*/).build(uiFieldDTO);
-					break;
+			case CONTROLTYPE_BIOMETRICS:
+				fxControl = new BiometricFxControl(/* getProofOfExceptionFields() */).build(uiFieldDTO);
+				break;
 
-				case CONTROLTYPE_BUTTON:
-					fxControl =  new ButtonFxControl().build(uiFieldDTO);
-					break;
+			case CONTROLTYPE_BUTTON:
+				fxControl = new ButtonFxControl().build(uiFieldDTO);
+				break;
 
-				case CONTROLTYPE_CHECKBOX:
-					fxControl = new CheckBoxFxControl().build(uiFieldDTO);
-					break;
+			case CONTROLTYPE_CHECKBOX:
+				fxControl = new CheckBoxFxControl().build(uiFieldDTO);
+				break;
 
-				case CONTROLTYPE_DOB:
-					fxControl =  new DOBFxControl().build(uiFieldDTO);
-					break;
+			case CONTROLTYPE_DOB:
+				fxControl = new DOBFxControl().build(uiFieldDTO);
+				break;
 
-				case CONTROLTYPE_DOB_AGE:
-					fxControl =  new DOBAgeFxControl().build(uiFieldDTO);
-					break;
+			case CONTROLTYPE_DOB_AGE:
+				fxControl = new DOBAgeFxControl().build(uiFieldDTO);
+				break;
 
-				case CONTROLTYPE_DOCUMENTS:
-					fxControl =  new DocumentFxControl().build(uiFieldDTO);
-					break;
+			case CONTROLTYPE_DOCUMENTS:
+				fxControl = new DocumentFxControl().build(uiFieldDTO);
+				break;
 
-				case CONTROLTYPE_DROPDOWN:
-					fxControl = new DropDownFxControl().build(uiFieldDTO);
-					break;
-				case CONTROLTYPE_HTML:
-					fxControl = new HtmlFxControl().build(uiFieldDTO);
-					break;
+			case CONTROLTYPE_DROPDOWN:
+				fxControl = new DropDownFxControl().build(uiFieldDTO);
+				break;
+			case CONTROLTYPE_HTML:
+				fxControl = new HtmlFxControl().build(uiFieldDTO);
+				break;
 			}
 		}
 
-
-		if(fxControl == null)
-			throw  new Exception("Failed to build fxControl");
+		if (fxControl == null)
+			throw new Exception("Failed to build fxControl");
 
 		fxControlMap.put(uiFieldDTO.getId(), fxControl);
 		return fxControl;
 	}
 
 	public void refreshFields() {
-		orderedScreens.values().forEach(screen -> { refreshScreenVisibility(screen.getName()); });
+		orderedScreens.values().forEach(screen -> {
+			refreshScreenVisibility(screen.getName());
+		});
 	}
 	
 	public void refreshDependentFields(List<String> dependentFields) {
@@ -1231,10 +1483,12 @@ public class GenericController extends BaseController {
 		}
 	}
 
-	/*public List<UiFieldDTO> getProofOfExceptionFields() {
-		return fields.stream().filter(field ->
-				field.getSubType().contains(RegistrationConstants.POE_DOCUMENT)).collect(Collectors.toList());
-	}*/
+	/*
+	 * public List<UiFieldDTO> getProofOfExceptionFields() { return
+	 * fields.stream().filter(field ->
+	 * field.getSubType().contains(RegistrationConstants.POE_DOCUMENT)).collect(
+	 * Collectors.toList()); }
+	 */
 
 	private FxControl getFxControl(String fieldId) {
 		return GenericController.getFxControlMap().get(fieldId);
@@ -1268,4 +1522,5 @@ public class GenericController extends BaseController {
 		TabPane tabPane = (TabPane) anchorPane.lookup(HASH + getRegistrationDTOFromSession().getRegistrationId());
 		return tabPane.getSelectionModel().getSelectedItem().getId().replace("_tab", EMPTY);
 	}
+
 }
